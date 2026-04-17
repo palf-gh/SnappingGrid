@@ -393,6 +393,10 @@ class SnappingGrid(GeneralPlugin):
 			mainX, mainY = self._mainIntervals(layer)
 			if mainX <= 0 or mainY <= 0:
 				return
+			# Snap to the finest (sub) grid so both main and sub lines are targets
+			stepX, stepY = self._subIntervals(mainX, mainY)
+			if stepX <= 0 or stepY <= 0:
+				stepX, stepY = mainX, mainY
 
 			master = layer.associatedFontMaster()
 			yBottom = master.descender if master else -200.0
@@ -408,8 +412,8 @@ class SnappingGrid(GeneralPlugin):
 			moves = {}
 			for node in selectedNodes:
 				pos = node.position
-				snappedX = round(pos.x / mainX) * mainX
-				snappedY = round((pos.y - yBottom) / mainY) * mainY + yBottom
+				snappedX = round(pos.x / stepX) * stepX
+				snappedY = round((pos.y - yBottom) / stepY) * stepY + yBottom
 				dx = snappedX - pos.x
 				dy = snappedY - pos.y
 				if abs(dx) > 1e-6 or abs(dy) > 1e-6:
