@@ -2,7 +2,7 @@
 from __future__ import division, print_function, unicode_literals
 import objc
 import traceback
-from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEUP
+from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEDRAGGED, MOUSEUP, OFFCURVE
 from GlyphsApp.plugins import GeneralPlugin
 from AppKit import (
 	NSMenuItem, NSColor, NSBezierPath, NSPoint,
@@ -367,7 +367,8 @@ class SnappingGrid(GeneralPlugin):
 		Glyphs.menu[EDIT_MENU].append(settingsItem)
 
 		Glyphs.addCallback(self._drawGrid_, DRAWBACKGROUND)
-		Glyphs.addCallback(self._snapOnMouseUp_, MOUSEUP)
+		Glyphs.addCallback(self._snapDuringDrag_, MOUSEDRAGGED)
+		Glyphs.addCallback(self._snapDuringDrag_, MOUSEUP)
 
 	def _toggleGrid_(self, sender):
 		self.gridVisible = not self.gridVisible
@@ -378,7 +379,7 @@ class SnappingGrid(GeneralPlugin):
 	def _showSettings_(self, sender):
 		self._settingsController.show()
 
-	def _snapOnMouseUp_(self, notification):
+	def _snapDuringDrag_(self, notification):
 		if not self.snapEnabled:
 			return
 		try:
@@ -392,16 +393,48 @@ class SnappingGrid(GeneralPlugin):
 			mainX, mainY = self._mainIntervals(layer)
 			if mainX <= 0 or mainY <= 0:
 				return
-			changed = False
-			for node in layer.selection:
+
+			master = layer.associatedFontMaster()
+			yBottom = master.descender if master else -200.0
+
+			# Only operate on GSNode items (skip anchors, components)
+			selectedNodes = [n for n in layer.selection
+			                 if hasattr(n, 'position') and hasattr(n, 'type')]
+			if not selectedNodes:
+				return
+			selectedSet = set(selectedNodes)
+
+			# Compute snap delta for each selected node (snap grid aligned to yBottom)
+			moves = {}
+			for node in selectedNodes:
 				pos = node.position
 				snappedX = round(pos.x / mainX) * mainX
-				snappedY = round(pos.y / mainY) * mainY
-				if snappedX != pos.x or snappedY != pos.y:
-					node.position = NSPoint(snappedX, snappedY)
-					changed = True
-			if changed:
-				Glyphs.redraw()
+				snappedY = round((pos.y - yBottom) / mainY) * mainY + yBottom
+				dx = snappedX - pos.x
+				dy = snappedY - pos.y
+				if abs(dx) > 1e-6 or abs(dy) > 1e-6:
+					moves[id(node)] = (node, dx, dy)
+
+			# Propagate delta to adjacent handles for on-curve nodes
+			# (only if the handle itself is not part of the user selection)
+			for nid, (node, dx, dy) in list(moves.items()):
+				if node.type == OFFCURVE:
+					continue
+				for neighbor in (node.prevNode, node.nextNode):
+					if neighbor is None:
+						continue
+					if neighbor.type != OFFCURVE:
+						continue
+					if neighbor in selectedSet:
+						continue
+					if id(neighbor) in moves:
+						continue
+					moves[id(neighbor)] = (neighbor, dx, dy)
+
+			# Apply all moves
+			for node, dx, dy in moves.values():
+				p = node.position
+				node.position = NSPoint(p.x + dx, p.y + dy)
 		except Exception:
 			print(traceback.format_exc())
 
