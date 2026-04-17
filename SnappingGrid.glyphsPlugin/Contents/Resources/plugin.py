@@ -507,9 +507,18 @@ class SnappingGrid(GeneralPlugin):
 
 			# Compute snap delta for each selected node (Y: unit=baseline 0, division=descender)
 			moves = {}
+			yShearRef = self._verticalShearYRef()
+			angle_deg = self._effectiveItalicAngleDegrees(layer)
+			tan_shear = math.tan(math.radians(angle_deg))
+
 			for node in selectedNodes:
 				pos = node.position
-				snappedX = round(pos.x / stepX) * stepX
+				if abs(tan_shear) < 1e-15:
+					snappedX = round(pos.x / stepX) * stepX
+				else:
+					u = pos.x - (pos.y - yShearRef) * tan_shear
+					u_snapped = round(u / stepX) * stepX
+					snappedX = u_snapped + (pos.y - yShearRef) * tan_shear
 				snappedY = round((pos.y - ySnapOrigin) / stepY) * stepY + ySnapOrigin
 				dx = snappedX - pos.x
 				dy = snappedY - pos.y
@@ -556,22 +565,34 @@ class SnappingGrid(GeneralPlugin):
 			grid_mode = Glyphs.defaults.get(PREF + '.mode', 'division')
 
 			if subX > 0 and subY > 0:
-				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode)
+				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer)
 			if mainX > 0 and mainY > 0:
-				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode)
+				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer)
 		except Exception:
 			print(traceback.format_exc())
 
 	@objc.python_method
-	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode):
+	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer):
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
-		x = stepX
-		while x < width:
-			path.moveToPoint_(NSPoint(x, yBottom))
-			path.lineToPoint_(NSPoint(x, yTop))
-			x += stepX
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		tan_shear = math.tan(math.radians(angle_deg))
+		y_shear_ref = self._verticalShearYRef()
+		if abs(tan_shear) < 1e-15:
+			x = stepX
+			while x < width:
+				path.moveToPoint_(NSPoint(x, yBottom))
+				path.lineToPoint_(NSPoint(x, yTop))
+				x += stepX
+		else:
+			k_min = int(math.floor((0.0 - (yTop - y_shear_ref) * tan_shear) / stepX)) - 3
+			k_max = int(math.ceil((width - (yBottom - y_shear_ref) * tan_shear) / stepX)) + 3
+			for k in range(k_min, k_max + 1):
+				x0 = k * stepX + (yBottom - y_shear_ref) * tan_shear
+				x1 = k * stepX + (yTop - y_shear_ref) * tan_shear
+				path.moveToPoint_(NSPoint(x0, yBottom))
+				path.lineToPoint_(NSPoint(x1, yTop))
 		# Horizontal lines: Unit mode aligns to baseline (y=0); Division keeps descender-based offset.
 		if stepY > 0:
 			if grid_mode == 'unit':
@@ -597,6 +618,91 @@ class SnappingGrid(GeneralPlugin):
 			return 0.0
 		master = layer.associatedFontMaster()
 		return master.descender if master else -200.0
+
+	@objc.python_method
+	def _verticalShearYRef(self):
+		"""Y origin for italic shear in x; baseline (0) so vertical grid aligns with edit view slant."""
+		return 0.0
+
+	@objc.python_method
+	def _glyphScriptTag(self, glyph):
+		if glyph is None:
+			return ''
+		try:
+			tag = glyph.script
+		except Exception:
+			tag = None
+		if tag is None:
+			return ''
+		return str(tag).strip().lower()
+
+	@objc.python_method
+	def _scripts_match_for_italic_cp(self, param_script, glyph_script):
+		ps = (param_script or '').strip().lower()
+		gs = (glyph_script or '').strip().lower()
+		if not ps or not gs:
+			return False
+		if ps == gs:
+			return True
+		# Friendly names vs common OpenType / Glyphs script tags
+		groups = (
+			frozenset(('latin', 'latn')),
+			frozenset(('kana', 'jpan', 'japanese')),
+			frozenset(('hani', 'hans', 'hant')),
+		)
+		for g in groups:
+			if ps in g and gs in g:
+				return True
+		return False
+
+	@objc.python_method
+	def _iter_custom_parameter_values_named(self, source, name):
+		if source is None:
+			return
+		cps = getattr(source, 'customParameters', None)
+		if not cps:
+			return
+		for p in cps:
+			pname = getattr(p, 'name', None)
+			if pname is None and hasattr(p, 'key'):
+				try:
+					pname = p.key()
+				except Exception:
+					pname = None
+			if pname != name:
+				continue
+			val = getattr(p, 'value', None)
+			yield val
+
+	@objc.python_method
+	def _effectiveItalicAngleDegrees(self, layer):
+		"""Italic angle used for vertical grid shear: script-specific `italicAngle` CP, else master value."""
+		master = layer.associatedFontMaster() if layer else None
+		glyph = layer.parent if layer else None
+		font = glyph.parent if glyph and getattr(glyph, 'parent', None) else None
+		gscript = self._glyphScriptTag(glyph)
+		for source in (master, font):
+			for raw in self._iter_custom_parameter_values_named(source, 'italicAngle'):
+				text = str(raw).strip()
+				if ':' in text:
+					seg, rest = text.split(':', 1)
+					try:
+						angle = float(rest.strip())
+					except (TypeError, ValueError):
+						continue
+					if self._scripts_match_for_italic_cp(seg, gscript):
+						return float(angle)
+		for source in (master, font):
+			for raw in self._iter_custom_parameter_values_named(source, 'italicAngle'):
+				text = str(raw).strip()
+				if ':' not in text:
+					try:
+						return float(text)
+					except (TypeError, ValueError):
+						continue
+		if master is not None:
+			return float(getattr(master, 'italicAngle', 0.0) or 0.0)
+		return 0.0
 
 	@objc.python_method
 	def _mainIntervals(self, layer):
