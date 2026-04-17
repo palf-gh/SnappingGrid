@@ -6,10 +6,10 @@ from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEUP
 from GlyphsApp.plugins import GeneralPlugin
 from AppKit import (
 	NSMenuItem, NSColor, NSBezierPath, NSPoint,
-	NSPanel, NSView, NSTextField, NSStepper, NSButton, NSColorWell,
-	NSMakeRect, NSColor, NSFont, NSTextAlignment,
+	NSPanel, NSBox, NSTextField, NSStepper, NSButton, NSColorWell,
+	NSMakeRect, NSFont,
 	NSTitledWindowMask, NSClosableWindowMask, NSFloatingWindowLevel,
-	NSBackingStoreBuffered, NSApplication,
+	NSBackingStoreBuffered,
 )
 from Foundation import NSObject, NSNotificationCenter
 
@@ -73,10 +73,9 @@ def _colorWell(x, y, w=44, h=26):
 
 
 def _separator(y, w=PANEL_W - 40):
-	sep = NSView.alloc().initWithFrame_(NSMakeRect(20, y, w, 1))
-	sep.setWantsLayer_(True)
-	sep.layer().setBackgroundColor_(NSColor.separatorColor().CGColor())
-	return sep
+	box = NSBox.alloc().initWithFrame_(NSMakeRect(20, y, w, 1))
+	box.setBoxType_(2)  # NSBoxSeparator
+	return box
 
 
 class SettingsPanelController(NSObject):
