@@ -2,7 +2,7 @@
 from __future__ import division, print_function, unicode_literals
 import objc
 import traceback
-from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND
+from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEUP
 from GlyphsApp.plugins import GeneralPlugin
 from AppKit import (
 	NSMenuItem, NSColor, NSBezierPath, NSPoint,
@@ -368,6 +368,7 @@ class SnappingGrid(GeneralPlugin):
 		Glyphs.menu[EDIT_MENU].append(settingsItem)
 
 		Glyphs.addCallback(self._drawGrid_, DRAWBACKGROUND)
+		Glyphs.addCallback(self._snapOnMouseUp_, MOUSEUP)
 
 	def _toggleGrid_(self, sender):
 		self.gridVisible = not self.gridVisible
@@ -377,6 +378,33 @@ class SnappingGrid(GeneralPlugin):
 
 	def _showSettings_(self, sender):
 		self._settingsController.show()
+
+	def _snapOnMouseUp_(self, notification):
+		if not self.snapEnabled:
+			return
+		try:
+			font = Glyphs.font
+			if not font:
+				return
+			layers = font.selectedLayers
+			if not layers:
+				return
+			layer = layers[0]
+			mainX, mainY = self._mainIntervals(layer)
+			if mainX <= 0 or mainY <= 0:
+				return
+			changed = False
+			for node in layer.selection:
+				pos = node.position
+				snappedX = round(pos.x / mainX) * mainX
+				snappedY = round(pos.y / mainY) * mainY
+				if snappedX != pos.x or snappedY != pos.y:
+					node.position = NSPoint(snappedX, snappedY)
+					changed = True
+			if changed:
+				Glyphs.redraw()
+		except Exception:
+			print(traceback.format_exc())
 
 	@objc.python_method
 	def _drawGrid_(self, layer, info):
