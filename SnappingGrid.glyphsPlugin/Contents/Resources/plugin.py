@@ -380,7 +380,7 @@ class SnappingGrid(GeneralPlugin):
 		self._settingsController.show()
 
 	def _snapDuringDrag_(self, notification):
-		if not self.snapEnabled:
+		if not self.snapEnabled or not self.gridVisible:
 			return
 		try:
 			font = Glyphs.font
