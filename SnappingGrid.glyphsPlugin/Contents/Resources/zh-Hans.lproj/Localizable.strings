@@ -1,0 +1,36 @@
+/* Plugin name */
+"plugin.name" = "吸附网格";
+
+/* View menu */
+"menu.show" = "显示吸附网格";
+
+/* Edit menu */
+"menu.settings" = "吸附网格设置\U2026";
+
+/* Settings window title */
+"settings.title" = "吸附网格设置";
+
+/* Grid mode */
+"settings.mode.label" = "网格方式:";
+"settings.mode.division" = "分割数";
+"settings.mode.unit" = "Unit数";
+
+/* Main grid */
+"settings.main.title" = "主网格";
+
+/* Sub grid */
+"settings.sub.title" = "子网格（主网格分割数）";
+
+/* Sync */
+"settings.sync" = "同步H/V";
+
+/* Colors */
+"settings.color.main" = "主色:";
+"settings.color.sub" = "子色:";
+
+/* Snap */
+"settings.snap" = "启用吸附";
+
+/* Buttons */
+"settings.cancel" = "取消";
+"settings.ok" = "OK";

@@ -1,0 +1,36 @@
+/* Plugin name */
+"plugin.name" = "스냅 그리드";
+
+/* View menu */
+"menu.show" = "스냅 그리드 표시";
+
+/* Edit menu */
+"menu.settings" = "스냅 그리드 설정\U2026";
+
+/* Settings window title */
+"settings.title" = "스냅 그리드 설정";
+
+/* Grid mode */
+"settings.mode.label" = "그리드 방식:";
+"settings.mode.division" = "분할 수";
+"settings.mode.unit" = "Unit 수";
+
+/* Main grid */
+"settings.main.title" = "메인 그리드";
+
+/* Sub grid */
+"settings.sub.title" = "서브 그리드（메인 분할 수）";
+
+/* Sync */
+"settings.sync" = "H/V 동기화";
+
+/* Colors */
+"settings.color.main" = "메인 색상:";
+"settings.color.sub" = "서브 색상:";
+
+/* Snap */
+"settings.snap" = "스냅 활성화";
+
+/* Buttons */
+"settings.cancel" = "취소";
+"settings.ok" = "OK";
