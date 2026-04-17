@@ -579,6 +579,7 @@ class SnappingGrid(GeneralPlugin):
 		angle_deg = self._effectiveItalicAngleDegrees(layer)
 		tan_shear = math.tan(math.radians(angle_deg))
 		y_shear_ref = self._verticalShearYRef()
+		k_min = k_max = None
 		if abs(tan_shear) < 1e-15:
 			x = stepX
 			while x < width:
@@ -593,21 +594,34 @@ class SnappingGrid(GeneralPlugin):
 				x1 = k * stepX + (yTop - y_shear_ref) * tan_shear
 				path.moveToPoint_(NSPoint(x0, yBottom))
 				path.lineToPoint_(NSPoint(x1, yTop))
+
+		def _horizontal_x_span(y):
+			if abs(tan_shear) < 1e-15:
+				return 0.0, width
+			xa = k_min * stepX + (y - y_shear_ref) * tan_shear
+			xb = k_max * stepX + (y - y_shear_ref) * tan_shear
+			if xa > xb:
+				return xb, xa
+			return xa, xb
+
 		# Horizontal lines: Unit mode aligns to baseline (y=0); Division keeps descender-based offset.
+		# With italic shear, span the same u-grid k range as verticals (not only [0, width]).
 		if stepY > 0:
 			if grid_mode == 'unit':
 				y_origin = 0.0
 				n = int(math.ceil((yBottom - y_origin) / stepY))
 				y = y_origin + n * stepY
 				while y < yTop:
-					path.moveToPoint_(NSPoint(0, y))
-					path.lineToPoint_(NSPoint(width, y))
+					xa, xb = _horizontal_x_span(y)
+					path.moveToPoint_(NSPoint(xa, y))
+					path.lineToPoint_(NSPoint(xb, y))
 					y += stepY
 			else:
 				y = yBottom + stepY
 				while y < yTop:
-					path.moveToPoint_(NSPoint(0, y))
-					path.lineToPoint_(NSPoint(width, y))
+					xa, xb = _horizontal_x_span(y)
+					path.moveToPoint_(NSPoint(xa, y))
+					path.lineToPoint_(NSPoint(xb, y))
 					y += stepY
 		path.stroke()
 
