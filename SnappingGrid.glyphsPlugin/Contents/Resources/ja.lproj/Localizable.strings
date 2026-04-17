@@ -1,0 +1,36 @@
+/* Plugin name */
+"plugin.name" = "スナッピンググリッド";
+
+/* View menu */
+"menu.show" = "スナッピンググリッドを表示";
+
+/* Edit menu */
+"menu.settings" = "スナッピンググリッドの設定\U2026";
+
+/* Settings window title */
+"settings.title" = "スナッピンググリッドの設定";
+
+/* Grid mode */
+"settings.mode.label" = "グリッド方式:";
+"settings.mode.division" = "分割数";
+"settings.mode.unit" = "Unit数";
+
+/* Main grid */
+"settings.main.title" = "メイングリッド";
+
+/* Sub grid */
+"settings.sub.title" = "サブグリッド（メインの分割数）";
+
+/* Sync */
+"settings.sync" = "縦横同期";
+
+/* Colors */
+"settings.color.main" = "メイン色:";
+"settings.color.sub" = "サブ色:";
+
+/* Snap */
+"settings.snap" = "スナップを有効にする";
+
+/* Buttons */
+"settings.cancel" = "キャンセル";
+"settings.ok" = "OK";
