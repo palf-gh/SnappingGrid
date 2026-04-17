@@ -497,6 +497,7 @@ class SnappingGrid(GeneralPlugin):
 
 			master = layer.associatedFontMaster()
 			ySnapOrigin = self._ySnapOriginForLayer(layer)
+			pivot = self._shearPivotY(layer)
 
 			# Only operate on GSNode items (skip anchors, components)
 			selectedNodes = [n for n in layer.selection
@@ -505,21 +506,23 @@ class SnappingGrid(GeneralPlugin):
 				return
 			selectedSet = set(selectedNodes)
 
-			# Compute snap delta for each selected node (Y: unit=baseline 0, division=descender)
+			# Snap each node to the nearest grid intersection.
+			# Horizontal grid lines are flat (y = const), vertical lines are sheared.
+			# u = x - tan*(y - pivot) is constant along each vertical grid line.
+			# We snap u and y independently, then reconstruct the intersection x.
 			moves = {}
-			yShearRef = self._verticalShearYRef()
 			angle_deg = self._effectiveItalicAngleDegrees(layer)
 			tan_shear = math.tan(math.radians(angle_deg))
 
 			for node in selectedNodes:
 				pos = node.position
+				snappedY = round((pos.y - ySnapOrigin) / stepY) * stepY + ySnapOrigin
 				if abs(tan_shear) < 1e-15:
 					snappedX = round(pos.x / stepX) * stepX
 				else:
-					u = pos.x - (pos.y - yShearRef) * tan_shear
+					u = pos.x - tan_shear * (pos.y - pivot)
 					u_snapped = round(u / stepX) * stepX
-					snappedX = u_snapped + (pos.y - yShearRef) * tan_shear
-				snappedY = round((pos.y - ySnapOrigin) / stepY) * stepY + ySnapOrigin
+					snappedX = u_snapped + tan_shear * (snappedY - pivot)
 				dx = snappedX - pos.x
 				dy = snappedY - pos.y
 				if abs(dx) > 1e-6 or abs(dy) > 1e-6:
@@ -564,65 +567,43 @@ class SnappingGrid(GeneralPlugin):
 			subX, subY = self._subIntervals(mainX, mainY)
 			grid_mode = Glyphs.defaults.get(PREF + '.mode', 'division')
 
+			pivot_y = self._shearPivotY(layer)
 			if subX > 0 and subY > 0:
-				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer)
+				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer, pivot_y)
 			if mainX > 0 and mainY > 0:
-				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer)
+				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer, pivot_y)
 		except Exception:
 			print(traceback.format_exc())
 
 	@objc.python_method
-	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer):
+	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer, pivot_y):
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
-		angle_deg = self._effectiveItalicAngleDegrees(layer)
-		tan_shear = math.tan(math.radians(angle_deg))
-		y_shear_ref = self._verticalShearYRef()
-		k_min = k_max = None
-		if abs(tan_shear) < 1e-15:
-			x = stepX
-			while x < width:
-				path.moveToPoint_(NSPoint(x, yBottom))
-				path.lineToPoint_(NSPoint(x, yTop))
-				x += stepX
-		else:
-			k_min = int(math.floor((0.0 - (yTop - y_shear_ref) * tan_shear) / stepX)) - 3
-			k_max = int(math.ceil((width - (yBottom - y_shear_ref) * tan_shear) / stepX)) + 3
-			for k in range(k_min, k_max + 1):
-				x0 = k * stepX + (yBottom - y_shear_ref) * tan_shear
-				x1 = k * stepX + (yTop - y_shear_ref) * tan_shear
-				path.moveToPoint_(NSPoint(x0, yBottom))
-				path.lineToPoint_(NSPoint(x1, yTop))
 
-		def _horizontal_x_span(y):
-			if abs(tan_shear) < 1e-15:
-				return 0.0, width
-			xa = k_min * stepX + (y - y_shear_ref) * tan_shear
-			xb = k_max * stepX + (y - y_shear_ref) * tan_shear
-			if xa > xb:
-				return xb, xa
-			return xa, xb
+		# Draw in glyph coordinate space (straight vertical / horizontal lines).
+		# Vertical lines
+		u = stepX
+		while u < width:
+			path.moveToPoint_(NSPoint(u, yBottom))
+			path.lineToPoint_(NSPoint(u, yTop))
+			u += stepX
 
-		# Horizontal lines: Unit mode aligns to baseline (y=0); Division keeps descender-based offset.
-		# With italic shear, span the same u-grid k range as verticals (not only [0, width]).
+		# Horizontal lines
 		if stepY > 0:
-			if grid_mode == 'unit':
-				y_origin = 0.0
-				n = int(math.ceil((yBottom - y_origin) / stepY))
-				y = y_origin + n * stepY
-				while y < yTop:
-					xa, xb = _horizontal_x_span(y)
-					path.moveToPoint_(NSPoint(xa, y))
-					path.lineToPoint_(NSPoint(xb, y))
-					y += stepY
-			else:
-				y = yBottom + stepY
-				while y < yTop:
-					xa, xb = _horizontal_x_span(y)
-					path.moveToPoint_(NSPoint(xa, y))
-					path.lineToPoint_(NSPoint(xb, y))
-					y += stepY
+			y_origin = 0.0 if grid_mode == 'unit' else yBottom
+			n = int(math.ceil((yBottom - y_origin) / stepY))
+			y = y_origin + n * stepY
+			while y <= yTop:
+				path.moveToPoint_(NSPoint(0.0,   y))
+				path.lineToPoint_(NSPoint(width, y))
+				y += stepY
+
+		# Apply italic shear via Glyphs API (same pivot used by Glyphs itself).
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		if abs(angle_deg) > 0.001:
+			path.transformWithAngle_center_(angle_deg, pivot_y)
+
 		path.stroke()
 
 	@objc.python_method
@@ -632,11 +613,6 @@ class SnappingGrid(GeneralPlugin):
 			return 0.0
 		master = layer.associatedFontMaster()
 		return master.descender if master else -200.0
-
-	@objc.python_method
-	def _verticalShearYRef(self):
-		"""Y origin for italic shear in x; baseline (0) so vertical grid aligns with edit view slant."""
-		return 0.0
 
 	@objc.python_method
 	def _glyphScriptTag(self, glyph):
@@ -689,9 +665,33 @@ class SnappingGrid(GeneralPlugin):
 			yield val
 
 	@objc.python_method
-	def _effectiveItalicAngleDegrees(self, layer):
-		"""Italic angle used for vertical grid shear: script-specific `italicAngle` CP, else master value."""
+	def _shearPivotY(self, layer):
+		"""Y pivot for italic shear. Uses master.slantHeightForLayer_, falls back to xHeight/2."""
 		master = layer.associatedFontMaster() if layer else None
+		if master is None:
+			return 0.0
+		try:
+			v = master.slantHeightForLayer_(layer)
+			if v is not None:
+				return float(v)
+		except Exception:
+			pass
+		xh = getattr(master, 'xHeight', None)
+		return float(xh) * 0.5 if xh else 0.0
+
+	@objc.python_method
+	def _effectiveItalicAngleDegrees(self, layer):
+		"""Italic angle for grid shear. Prefers master.italicAngleForLayer_ (handles script CPs)."""
+		master = layer.associatedFontMaster() if layer else None
+		if master is None:
+			return 0.0
+		try:
+			a = master.italicAngleForLayer_(layer)
+			if a is not None:
+				return float(a)
+		except Exception:
+			pass
+		# Fallback: manual script-specific custom parameter parsing
 		glyph = layer.parent if layer else None
 		font = glyph.parent if glyph and getattr(glyph, 'parent', None) else None
 		gscript = self._glyphScriptTag(glyph)
@@ -714,9 +714,7 @@ class SnappingGrid(GeneralPlugin):
 						return float(text)
 					except (TypeError, ValueError):
 						continue
-		if master is not None:
-			return float(getattr(master, 'italicAngle', 0.0) or 0.0)
-		return 0.0
+		return float(getattr(master, 'italicAngle', 0.0) or 0.0)
 
 	@objc.python_method
 	def _mainIntervals(self, layer):
