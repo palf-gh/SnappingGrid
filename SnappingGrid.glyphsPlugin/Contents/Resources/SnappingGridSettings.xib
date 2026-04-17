@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24412" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24412"/>
+        <capability name="System colors introduced in macOS 10.14" minToolsVersion="10.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="SettingsPanelController">
+            <connections>
+                <outlet property="_cancelButton" destination="cancelButton" id="out-cancel"/>
+                <outlet property="_labelGridMode" destination="labelGridMode" id="out-label-gridmode"/>
+                <outlet property="_labelMainColor" destination="labelMainColor" id="out-label-main-colour"/>
+                <outlet property="_captionMainV" destination="labelV1" id="out-caption-main-v"/>
+                <outlet property="_captionSubV" destination="labelV2" id="out-caption-sub-v"/>
+                <outlet property="_labelMainGrid" destination="labelMainGrid" id="out-label-main"/>
+                <outlet property="_labelSubColor" destination="labelSubColor" id="out-label-sub-colour"/>
+                <outlet property="_labelSubGrid" destination="labelSubGrid" id="out-label-sub"/>
+                <outlet property="_mainColorWell" destination="mainColorWell" id="out-main-colour"/>
+                <outlet property="_mainH" destination="mainH" id="out-mainH"/>
+                <outlet property="_mainHStep" destination="mainHStep" id="out-mainHStep"/>
+                <outlet property="_mainSync" destination="mainSync" id="out-mainSync"/>
+                <outlet property="_mainV" destination="mainV" id="out-mainV"/>
+                <outlet property="_mainVStep" destination="mainVStep" id="out-mainVStep"/>
+                <outlet property="_okButton" destination="okButton" id="out-ok"/>
+                <outlet property="_radioDivision" destination="radioDivision" id="out-radio-division"/>
+                <outlet property="_radioUnit" destination="radioUnit" id="out-radio-unit"/>
+                <outlet property="_snapCheck" destination="snapCheck" id="out-snap"/>
+                <outlet property="_subColorWell" destination="subColorWell" id="out-sub-colour"/>
+                <outlet property="_subH" destination="subH" id="out-subH"/>
+                <outlet property="_subHStep" destination="subHStep" id="out-subHStep"/>
+                <outlet property="_subSync" destination="subSync" id="out-subSync"/>
+                <outlet property="_subV" destination="subV" id="out-subV"/>
+                <outlet property="_subVStep" destination="subVStep" id="out-subVStep"/>
+                <outlet property="panel" destination="panel1" id="out-panel"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Snapping Grid Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="panel1" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
+            <rect key="contentRect" x="0.0" y="0.0" width="400" height="340"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1569"/>
+            <view key="contentView" id="contentView1">
+                <rect key="frame" x="0.0" y="0.0" width="400" height="340"/>
+                <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                <subviews>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridMode">
+                        <rect key="frame" x="20" y="302" width="80" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Grid Mode:" id="08n-Lr-6OH"/>
+                    </textField>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioDivision">
+                        <rect key="frame" x="108" y="300" width="100" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Division" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="FJD-W6-Tez"/>
+                        <connections>
+                            <action selector="modeChanged:" target="-2" id="rdiv-action"/>
+                        </connections>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioUnit">
+                        <rect key="frame" x="218" y="300" width="80" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Unit" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5KI-HW-llj"/>
+                        <connections>
+                            <action selector="modeChanged:" target="-2" id="runit-action"/>
+                        </connections>
+                    </button>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep1">
+                        <rect key="frame" x="20" y="285" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainGrid">
+                        <rect key="frame" x="20" y="264" width="360" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Main Grid" id="LHb-Rf-9t9">
+                            <font key="font" metaFont="systemBold"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelH1">
+                        <rect key="frame" x="20" y="238" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="H:" id="MwW-JH-6Ym"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainH">
+                        <rect key="frame" x="44" y="236" width="56" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="4" drawsBackground="YES" id="ee3-Wc-SJF">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainHStep">
+                        <rect key="frame" x="102" y="236" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="W3K-wA-ZhS"/>
+                        <connections>
+                            <action selector="stepperChanged:" target="-2" id="mhstep-action"/>
+                        </connections>
+                    </stepper>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelV1">
+                        <rect key="frame" x="148" y="238" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="V:" id="Zl5-hX-ldm"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainV">
+                        <rect key="frame" x="172" y="236" width="56" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="4" drawsBackground="YES" id="Eon-qJ-LAD">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainVStep">
+                        <rect key="frame" x="230" y="236" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="Ouc-Jp-9Ki"/>
+                        <connections>
+                            <action selector="stepperChanged:" target="-2" id="mvstep-action"/>
+                        </connections>
+                    </stepper>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainSync">
+                        <rect key="frame" x="265" y="237" width="115" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="HhF-gO-b8D"/>
+                    </button>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep2">
+                        <rect key="frame" x="20" y="222" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubGrid">
+                        <rect key="frame" x="20" y="201" width="360" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Sub Grid (main subdivisions)" id="ajd-7c-fKG">
+                            <font key="font" metaFont="systemBold"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelH2">
+                        <rect key="frame" x="20" y="175" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="H:" id="tgk-6z-nhs"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subH">
+                        <rect key="frame" x="44" y="173" width="56" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="2" drawsBackground="YES" id="RzL-Jx-Ui9">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subHStep">
+                        <rect key="frame" x="102" y="173" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="z0m-dv-1H1"/>
+                        <connections>
+                            <action selector="stepperChanged:" target="-2" id="shstep-action"/>
+                        </connections>
+                    </stepper>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelV2">
+                        <rect key="frame" x="148" y="175" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="V:" id="gRk-iT-AoC"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subV">
+                        <rect key="frame" x="172" y="173" width="56" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="2" drawsBackground="YES" id="iKD-oD-Bim">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subVStep">
+                        <rect key="frame" x="230" y="173" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="BNo-0X-qBf"/>
+                        <connections>
+                            <action selector="stepperChanged:" target="-2" id="svstep-action"/>
+                        </connections>
+                    </stepper>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subSync">
+                        <rect key="frame" x="265" y="174" width="115" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Ys2-Uh-EWy"/>
+                    </button>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep3">
+                        <rect key="frame" x="20" y="158" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainColor">
+                        <rect key="frame" x="20" y="128" width="72" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Main Color:" id="hsg-dj-omh"/>
+                    </textField>
+                    <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainColorWell">
+                        <rect key="frame" x="96" y="120" width="44" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <color key="color" red="0.20000000000000001" green="0.5" blue="1" alpha="0.40000000000000002" colorSpace="calibratedRGB"/>
+                    </colorWell>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubColor">
+                        <rect key="frame" x="200" y="128" width="60" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Sub Color:" id="PQO-ac-bOF"/>
+                    </textField>
+                    <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subColorWell">
+                        <rect key="frame" x="264" y="120" width="44" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <color key="color" red="0.20000000000000001" green="0.5" blue="1" alpha="0.14999999999999999" colorSpace="calibratedRGB"/>
+                    </colorWell>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep4">
+                        <rect key="frame" x="20" y="108" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="snapCheck">
+                        <rect key="frame" x="20" y="84" width="200" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Enable snap" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3jb-sY-HvZ"/>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cancelButton">
+                        <rect key="frame" x="208" y="16" width="88" height="24"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" id="B1q-K3-bbm">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="cancel:" target="-2" id="cancel-action"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="okButton">
+                        <rect key="frame" x="304" y="16" width="76" height="24"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" id="8Zb-qI-zk8">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        </buttonCell>
+                        <color key="bezelColor" name="controlAccentColor" catalog="System" colorSpace="catalog"/>
+                        <connections>
+                            <action selector="ok:" target="-2" id="ok-action"/>
+                        </connections>
+                    </button>
+                </subviews>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="panel-delegate"/>
+            </connections>
+            <point key="canvasLocation" x="140" y="142"/>
+        </window>
+    </objects>
+</document>
