@@ -39,9 +39,16 @@ class SettingsPanelController(NSObject):
 	_mainColorWell  = objc.IBOutlet()
 	_labelSubColor  = objc.IBOutlet()
 	_subColorWell   = objc.IBOutlet()
-	_snapCheck      = objc.IBOutlet()
-	_cancelButton   = objc.IBOutlet()
-	_okButton       = objc.IBOutlet()
+	_snapCheck       = objc.IBOutlet()
+	_cancelButton    = objc.IBOutlet()
+	_okButton        = objc.IBOutlet()
+	_labelGridShape  = objc.IBOutlet()
+	_radioSquare     = objc.IBOutlet()
+	_radioTriangle   = objc.IBOutlet()
+	_labelOrientation = objc.IBOutlet()
+	_radioHorizontal = objc.IBOutlet()
+	_radioVertical   = objc.IBOutlet()
+	_resetButton     = objc.IBOutlet()
 
 	def initWithPlugin_(self, plugin):
 		self = objc.super(SettingsPanelController, self).init()
@@ -112,6 +119,19 @@ class SettingsPanelController(NSObject):
 		self._mainSync.setAction_(sync_sel)
 		self._subSync.setTarget_(self)
 		self._subSync.setAction_(sync_sel)
+		shape_sel = NSSelectorFromString('shapeChanged:')
+		self._radioSquare.setTarget_(self)
+		self._radioSquare.setAction_(shape_sel)
+		self._radioTriangle.setTarget_(self)
+		self._radioTriangle.setAction_(shape_sel)
+		orient_sel = NSSelectorFromString('orientationChanged:')
+		self._radioHorizontal.setTarget_(self)
+		self._radioHorizontal.setAction_(orient_sel)
+		self._radioVertical.setTarget_(self)
+		self._radioVertical.setAction_(orient_sel)
+		reset_sel = NSSelectorFromString('resetToDefaults:')
+		self._resetButton.setTarget_(self)
+		self._resetButton.setAction_(reset_sel)
 
 	def _applyLocalisation(self):
 		lx = Glyphs.localize
@@ -143,6 +163,23 @@ class SettingsPanelController(NSObject):
 		self._snapCheck.setTitle_(lx({'en': 'Enable snap', 'ja': 'スナップを有効にする', 'zh': '启用吸附', 'ko': '스냅 활성화'}))
 		self._cancelButton.setTitle_(lx({'en': 'Cancel', 'ja': 'キャンセル', 'zh': '取消', 'ko': '취소'}))
 		self._okButton.setTitle_(lx({'en': 'OK', 'ja': 'OK', 'zh': 'OK', 'ko': 'OK'}))
+		self._labelGridShape.setStringValue_(lx({
+			'en': 'Grid Shape:',
+			'ja': 'グリッド形状:',
+			'zh': '网格形状:',
+			'ko': '그리드 형태:',
+		}))
+		self._radioSquare.setTitle_(lx({'en': 'Square', 'ja': '方眼', 'zh': '方格', 'ko': '사각형'}))
+		self._radioTriangle.setTitle_(lx({'en': 'Triangle', 'ja': '三角形', 'zh': '三角形', 'ko': '삼각형'}))
+		self._labelOrientation.setStringValue_(lx({
+			'en': 'Orientation:',
+			'ja': '方向:',
+			'zh': '方向:',
+			'ko': '방향:',
+		}))
+		self._radioHorizontal.setTitle_(lx({'en': 'Horizontal', 'ja': '水平', 'zh': '水平', 'ko': '수평'}))
+		self._radioVertical.setTitle_(lx({'en': 'Vertical', 'ja': '垂直', 'zh': '垂直', 'ko': '수직'}))
+		self._resetButton.setTitle_(lx({'en': 'Reset', 'ja': 'リセット', 'zh': '重置', 'ko': '초기화'}))
 		self._applyReadableColours()
 
 	@objc.python_method
@@ -165,7 +202,8 @@ class SettingsPanelController(NSObject):
 
 		visit(self.panel.contentView())
 
-		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck):
+		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck,
+		            self._radioSquare, self._radioTriangle, self._radioHorizontal, self._radioVertical):
 			self._setButtonTitleColour_(btn, label_colour)
 		for btn in (self._cancelButton, self._okButton):
 			self._setButtonTitleColour_(btn, control_colour)
@@ -186,9 +224,12 @@ class SettingsPanelController(NSObject):
 		button.setAttributedTitle_(attr_title)
 
 	def _loadToUI(self):
-		p = PREF
-		d = Glyphs.defaults
-		mode = d.get(p + '.mode', 'division')
+		self._loadFromDict(self.plugin._getSettings(Glyphs.font))
+
+	@objc.python_method
+	def _loadFromDict(self, s):
+		"""UI コントロールを設定 dict で更新する。"""
+		mode = s.get('mode', 'division')
 		if mode == 'unit':
 			self._radioUnit.setState_(1)
 			self._radioDivision.setState_(0)
@@ -196,23 +237,37 @@ class SettingsPanelController(NSObject):
 			self._radioDivision.setState_(1)
 			self._radioUnit.setState_(0)
 
-		self._applyMainGridFieldsFromPrefs(d)
+		self._applyMainGridFieldsFromSettings(s)
 
-		self._mainSync.setState_(1 if d.get(p + '.mainSync', False) else 0)
-		self._subH.setStringValue_(str(int(d.get(p + '.subDivX', 2))))
-		self._subV.setStringValue_(str(int(d.get(p + '.subDivY', 2))))
-		self._subHStep.setIntValue_(int(d.get(p + '.subDivX', 2)))
-		self._subVStep.setIntValue_(int(d.get(p + '.subDivY', 2)))
-		self._subSync.setState_(1 if d.get(p + '.subSync', False) else 0)
+		self._mainSync.setState_(1 if s.get('mainSync', False) else 0)
+		self._subH.setStringValue_(str(int(s.get('subDivX', 2))))
+		self._subV.setStringValue_(str(int(s.get('subDivY', 2))))
+		self._subHStep.setIntValue_(int(s.get('subDivX', 2)))
+		self._subVStep.setIntValue_(int(s.get('subDivY', 2)))
+		self._subSync.setState_(1 if s.get('subSync', False) else 0)
 
-		self._mainColorWell.setColor_(NSColor.colorWithCalibratedRed_green_blue_alpha_(
-			float(d.get(p + '.mainR', 0.2)), float(d.get(p + '.mainG', 0.5)),
-			float(d.get(p + '.mainB', 1.0)), float(d.get(p + '.mainA', 0.4))))
-		self._subColorWell.setColor_(NSColor.colorWithCalibratedRed_green_blue_alpha_(
-			float(d.get(p + '.subR', 0.2)), float(d.get(p + '.subG', 0.5)),
-			float(d.get(p + '.subB', 1.0)), float(d.get(p + '.subA', 0.15))))
+		mc = s.get('mainColor', [0.2, 0.5, 1.0, 0.4])
+		sc = s.get('subColor',  [0.2, 0.5, 1.0, 0.15])
+		self._mainColorWell.setColor_(NSColor.colorWithCalibratedRed_green_blue_alpha_(mc[0], mc[1], mc[2], mc[3]))
+		self._subColorWell.setColor_(NSColor.colorWithCalibratedRed_green_blue_alpha_(sc[0], sc[1], sc[2], sc[3]))
 
-		self._snapCheck.setState_(1 if d.get(p + '.snapEnabled', True) else 0)
+		shape = s.get('gridShape', 'square')
+		if shape == 'triangle':
+			self._radioTriangle.setState_(1)
+			self._radioSquare.setState_(0)
+		else:
+			self._radioSquare.setState_(1)
+			self._radioTriangle.setState_(0)
+		orient = s.get('triOrientation', 'horizontal')
+		if orient == 'vertical':
+			self._radioVertical.setState_(1)
+			self._radioHorizontal.setState_(0)
+		else:
+			self._radioHorizontal.setState_(1)
+			self._radioVertical.setState_(0)
+		self._updateOrientationAvailability()
+
+		self._snapCheck.setState_(1 if s.get('snapEnabled', True) else 0)
 		if self._mainSync.state() == 1:
 			self._propagateMainHToV()
 		if self._subSync.state() == 1:
@@ -221,18 +276,15 @@ class SettingsPanelController(NSObject):
 		self._updateSubGridCaptionForMode()
 
 	@objc.python_method
-	def _applyMainGridFieldsFromPrefs(self, d):
-		p = PREF
+	def _applyMainGridFieldsFromSettings(self, s):
 		if self._radioUnit.state() == 1:
-			self._mainH.setStringValue_(str(int(d.get(p + '.mainUnitX', 100))))
-			self._mainV.setStringValue_(str(int(d.get(p + '.mainUnitY', 100))))
-			self._mainHStep.setIntValue_(int(d.get(p + '.mainUnitX', 100)))
-			self._mainVStep.setIntValue_(int(d.get(p + '.mainUnitY', 100)))
+			hv = (int(s.get('mainUnitX', 100)), int(s.get('mainUnitY', 100)))
 		else:
-			self._mainH.setStringValue_(str(int(d.get(p + '.mainDivX', 4))))
-			self._mainV.setStringValue_(str(int(d.get(p + '.mainDivY', 4))))
-			self._mainHStep.setIntValue_(int(d.get(p + '.mainDivX', 4)))
-			self._mainVStep.setIntValue_(int(d.get(p + '.mainDivY', 4)))
+			hv = (int(s.get('mainDivX', 4)), int(s.get('mainDivY', 4)))
+		self._mainH.setStringValue_(str(hv[0]))
+		self._mainV.setStringValue_(str(hv[1]))
+		self._mainHStep.setIntValue_(hv[0])
+		self._mainVStep.setIntValue_(hv[1])
 
 	@objc.python_method
 	def _updateSubGridCaptionForMode(self):
@@ -268,44 +320,39 @@ class SettingsPanelController(NSObject):
 			self._captionSubV.setEnabled_(not sub_on)
 
 	def _saveFromUI(self):
-		p = PREF
-		d = Glyphs.defaults
 		mode = 'division' if self._radioDivision.state() == 1 else 'unit'
-		d[p + '.mode'] = mode
 		hVal = max(1, int(float(self._mainH.stringValue() or '1')))
 		vVal = max(1, int(float(self._mainV.stringValue() or '1')))
 		if self._mainSync.state() == 1:
 			vVal = hVal
-		if mode == 'unit':
-			d[p + '.mainUnitX'] = hVal
-			d[p + '.mainUnitY'] = vVal
-		else:
-			d[p + '.mainDivX'] = hVal
-			d[p + '.mainDivY'] = vVal
-		d[p + '.mainSync'] = (self._mainSync.state() == 1)
-
 		sx = max(1, int(float(self._subH.stringValue() or '1')))
 		sy = max(1, int(float(self._subV.stringValue() or '1')))
 		if self._subSync.state() == 1:
 			sy = sx
-		d[p + '.subDivX'] = sx
-		d[p + '.subDivY'] = sy
-		d[p + '.subSync'] = (self._subSync.state() == 1)
 
-		mc = self._mainColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
-		sc = self._subColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
-		if mc:
-			d[p + '.mainR'] = mc.redComponent()
-			d[p + '.mainG'] = mc.greenComponent()
-			d[p + '.mainB'] = mc.blueComponent()
-			d[p + '.mainA'] = mc.alphaComponent()
-		if sc:
-			d[p + '.subR'] = sc.redComponent()
-			d[p + '.subG'] = sc.greenComponent()
-			d[p + '.subB'] = sc.blueComponent()
-			d[p + '.subA'] = sc.alphaComponent()
+		mc_ns = self._mainColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
+		sc_ns = self._subColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
+		mc = [mc_ns.redComponent(), mc_ns.greenComponent(), mc_ns.blueComponent(), mc_ns.alphaComponent()] if mc_ns else [0.2, 0.5, 1.0, 0.4]
+		sc = [sc_ns.redComponent(), sc_ns.greenComponent(), sc_ns.blueComponent(), sc_ns.alphaComponent()] if sc_ns else [0.2, 0.5, 1.0, 0.15]
 
-		d[p + '.snapEnabled'] = (self._snapCheck.state() == 1)
+		prev = self.plugin._getSettings(Glyphs.font)
+		s = {
+			'mode':           mode,
+			'mainDivX':       hVal if mode == 'division' else prev.get('mainDivX', 4),
+			'mainDivY':       vVal if mode == 'division' else prev.get('mainDivY', 4),
+			'mainUnitX':      hVal if mode == 'unit'     else prev.get('mainUnitX', 100),
+			'mainUnitY':      vVal if mode == 'unit'     else prev.get('mainUnitY', 100),
+			'mainSync':       self._mainSync.state() == 1,
+			'subDivX':        sx,
+			'subDivY':        sy,
+			'subSync':        self._subSync.state() == 1,
+			'mainColor':      mc,
+			'subColor':       sc,
+			'snapEnabled':    self._snapCheck.state() == 1,
+			'gridShape':      'triangle' if self._radioTriangle.state() == 1 else 'square',
+			'triOrientation': 'vertical' if self._radioVertical.state() == 1 else 'horizontal',
+		}
+		self.plugin._saveSettings(Glyphs.font, s)
 
 	def modeChanged_(self, sender):
 		# NSButton radio は兄弟間で自動排他されないことがある。sender を基準に明示的に片方だけ ON にする。
@@ -323,7 +370,7 @@ class SettingsPanelController(NSObject):
 			else:
 				self._radioDivision.setState_(1)
 				self._radioUnit.setState_(0)
-		self._applyMainGridFieldsFromPrefs(Glyphs.defaults)
+		self._applyMainGridFieldsFromSettings(self.plugin._getSettings(Glyphs.font))
 		self._updateSubGridCaptionForMode()
 		if self._mainSync.state() == 1:
 			self._propagateMainHToV()
@@ -337,6 +384,33 @@ class SettingsPanelController(NSObject):
 		elif sender is self._subSync and self._subSync.state() == 1:
 			self._propagateSubHToV()
 		self._updateSyncFieldAvailability()
+
+	def shapeChanged_(self, sender):
+		if sender is self._radioTriangle:
+			self._radioTriangle.setState_(1)
+			self._radioSquare.setState_(0)
+		else:
+			self._radioSquare.setState_(1)
+			self._radioTriangle.setState_(0)
+		self._updateOrientationAvailability()
+
+	def orientationChanged_(self, sender):
+		if sender is self._radioVertical:
+			self._radioVertical.setState_(1)
+			self._radioHorizontal.setState_(0)
+		else:
+			self._radioHorizontal.setState_(1)
+			self._radioVertical.setState_(0)
+
+	def resetToDefaults_(self, sender):
+		self._loadFromDict(self.plugin._defaultSettings())
+
+	@objc.python_method
+	def _updateOrientationAvailability(self):
+		is_tri = self._radioTriangle.state() == 1
+		for ctl in (self._labelOrientation, self._radioHorizontal, self._radioVertical):
+			if ctl is not None:
+				ctl.setEnabled_(is_tri)
 
 	@objc.python_method
 	def _propagateMainHToV(self):
@@ -477,7 +551,7 @@ class SnappingGrid(GeneralPlugin):
 		self._settingsController.show()
 
 	def _snapDuringDrag_(self, notification):
-		if not self.snapEnabled or not self.gridVisible:
+		if not self.gridVisible:
 			return
 		try:
 			font = Glyphs.font
@@ -487,16 +561,18 @@ class SnappingGrid(GeneralPlugin):
 			if not layers:
 				return
 			layer = layers[0]
-			mainX, mainY = self._mainIntervals(layer)
+			s = self._getSettings(font)
+			if not s.get('snapEnabled', True):
+				return
+			mainX, mainY = self._mainIntervals(layer, s)
 			if mainX <= 0 or mainY <= 0:
 				return
 			# Snap to the finest (sub) grid so both main and sub lines are targets
-			stepX, stepY = self._subIntervals(mainX, mainY)
+			stepX, stepY = self._subIntervals(s, mainX, mainY)
 			if stepX <= 0 or stepY <= 0:
 				stepX, stepY = mainX, mainY
 
-			master = layer.associatedFontMaster()
-			ySnapOrigin = self._ySnapOriginForLayer(layer)
+			ySnapOrigin = self._ySnapOriginForLayer(layer, s)
 			pivot = self._shearPivotY(layer)
 
 			# Only operate on GSNode items (skip anchors, components)
@@ -506,23 +582,42 @@ class SnappingGrid(GeneralPlugin):
 				return
 			selectedSet = set(selectedNodes)
 
-			# Snap each node to the nearest grid intersection.
-			# Horizontal grid lines are flat (y = const), vertical lines are sheared.
-			# u = x - tan*(y - pivot) is constant along each vertical grid line.
-			# We snap u and y independently, then reconstruct the intersection x.
 			moves = {}
 			angle_deg = self._effectiveItalicAngleDegrees(layer)
 			tan_shear = math.tan(math.radians(angle_deg))
+			shape = s['gridShape']
 
 			for node in selectedNodes:
 				pos = node.position
-				snappedY = round((pos.y - ySnapOrigin) / stepY) * stepY + ySnapOrigin
+				# Un-shear to glyph space (italic shear is applied to grid lines but not stored positions)
 				if abs(tan_shear) < 1e-15:
-					snappedX = round(pos.x / stepX) * stepX
+					pu, pv = pos.x, pos.y
 				else:
-					u = pos.x - tan_shear * (pos.y - pivot)
-					u_snapped = round(u / stepX) * stepX
+					pu = pos.x - tan_shear * (pos.y - pivot)
+					pv = pos.y
+
+				if shape == 'triangle':
+					orient = s['triOrientation']
+					if orient == 'horizontal':
+						# Lattice: P(m,n) = (m*stepX + n*stepX/2, n*stepY + ySnapOrigin)
+						n_snap = round((pv - ySnapOrigin) / stepY)
+						m_snap = round((pu - n_snap * stepX * 0.5) / stepX)
+						su = m_snap * stepX + n_snap * stepX * 0.5
+						sv = n_snap * stepY + ySnapOrigin
+					else:
+						# Lattice: P(m,n) = (n*stepX, m*stepY + n*stepY/2)
+						n_snap = round(pu / stepX)
+						m_snap = round((pv - n_snap * stepY * 0.5) / stepY)
+						su = n_snap * stepX
+						sv = m_snap * stepY + n_snap * stepY * 0.5
+					snappedX = su + tan_shear * (sv - pivot)
+					snappedY = sv
+				else:
+					# Square grid: snap u and y independently
+					snappedY = round((pv - ySnapOrigin) / stepY) * stepY + ySnapOrigin
+					u_snapped = round(pu / stepX) * stepX
 					snappedX = u_snapped + tan_shear * (snappedY - pivot)
+
 				dx = snappedX - pos.x
 				dy = snappedY - pos.y
 				if abs(dx) > 1e-6 or abs(dy) > 1e-6:
@@ -563,15 +658,25 @@ class SnappingGrid(GeneralPlugin):
 			scale = info.get('Scale', 1.0) if isinstance(info, dict) else 1.0
 			lineWidth = 1.0 / scale
 
-			mainX, mainY = self._mainIntervals(layer)
-			subX, subY = self._subIntervals(mainX, mainY)
-			grid_mode = Glyphs.defaults.get(PREF + '.mode', 'division')
+			s = self._getSettings(Glyphs.font)
+			mainX, mainY = self._mainIntervals(layer, s)
+			subX, subY = self._subIntervals(s, mainX, mainY)
+			grid_mode = s['mode']
 
 			pivot_y = self._shearPivotY(layer)
-			if subX > 0 and subY > 0:
-				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer, pivot_y)
-			if mainX > 0 and mainY > 0:
-				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer, pivot_y)
+			shape = s['gridShape']
+			if shape == 'triangle':
+				orient = s['triOrientation']
+				y_origin = 0.0 if grid_mode == 'unit' else yBottom
+				if subX > 0 and subY > 0:
+					self._strokeTriGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), orient, y_origin, layer, pivot_y)
+				if mainX > 0 and mainY > 0:
+					self._strokeTriGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), orient, y_origin, layer, pivot_y)
+			else:
+				if subX > 0 and subY > 0:
+					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), grid_mode, layer, pivot_y)
+				if mainX > 0 and mainY > 0:
+					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), grid_mode, layer, pivot_y)
 		except Exception:
 			print(traceback.format_exc())
 
@@ -607,9 +712,103 @@ class SnappingGrid(GeneralPlugin):
 		path.stroke()
 
 	@objc.python_method
-	def _ySnapOriginForLayer(self, layer):
+	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, layer, pivot_y):
+		if orientation == 'vertical':
+			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
+		else:
+			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
+
+	@objc.python_method
+	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+		"""Horizontal tri-grid: horizontal lines + ±diagonal lines (slope = 2*stepY/stepX)."""
+		color.set()
+		path = NSBezierPath.alloc().init()
+		path.setLineWidth_(lineWidth)
+		slope = 2.0 * stepY / stepX
+
+		# Horizontal lines, anchored at y_origin
+		n_start = int(math.floor((yBottom - y_origin) / stepY))
+		n_end = int(math.ceil((yTop - y_origin) / stepY))
+		for n in range(n_start, n_end + 1):
+			y = y_origin + n * stepY
+			if yBottom <= y <= yTop:
+				path.moveToPoint_(NSPoint(0.0, y))
+				path.lineToPoint_(NSPoint(width, y))
+
+		# Diagonal lines pass through (m*stepX, y_origin).
+		# "/" : y - y_origin = slope*(x - m*stepX)  →  x = (y-y_origin)/slope + m*stepX
+		# "\" : y - y_origin = -slope*(x - m*stepX) →  x = m*stepX - (y-y_origin)/slope
+		extra = int(math.ceil((abs(yTop - y_origin) + abs(yBottom - y_origin)) / slope / stepX)) + 2
+		m_min = -extra
+		m_max = int(math.ceil(width / stepX)) + extra
+
+		for m in range(m_min, m_max + 1):
+			# "/"
+			x0 = (yBottom - y_origin) / slope + m * stepX
+			x1 = (yTop - y_origin) / slope + m * stepX
+			if not (x1 < 0 or x0 > width):
+				path.moveToPoint_(NSPoint(x0, yBottom))
+				path.lineToPoint_(NSPoint(x1, yTop))
+			# "\"
+			x0b = m * stepX - (yBottom - y_origin) / slope
+			x1b = m * stepX - (yTop - y_origin) / slope
+			if not (x1b > width or x0b < 0):
+				path.moveToPoint_(NSPoint(x0b, yBottom))
+				path.lineToPoint_(NSPoint(x1b, yTop))
+
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		if abs(angle_deg) > 0.001:
+			path.transformWithAngle_center_(angle_deg, pivot_y)
+		path.stroke()
+
+	@objc.python_method
+	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+		"""Vertical tri-grid: vertical lines + ±diagonal lines (slope = stepY/(2*stepX))."""
+		color.set()
+		path = NSBezierPath.alloc().init()
+		path.setLineWidth_(lineWidth)
+		slope_v = stepY / (2.0 * stepX)
+
+		# Vertical lines
+		u = stepX
+		while u < width:
+			path.moveToPoint_(NSPoint(u, yBottom))
+			path.lineToPoint_(NSPoint(u, yTop))
+			u += stepX
+
+		# Diagonal lines pass through (0, m*stepY + y_origin).
+		# "/" : y = slope_v*x + m*stepY + y_origin
+		# "\" : y = -slope_v*x + m*stepY + y_origin
+		extra = int(math.ceil((abs(yTop) + abs(yBottom)) / stepY + width * slope_v / stepY)) + 2
+		m_min = int(math.floor((yBottom - y_origin) / stepY)) - extra
+		m_max = int(math.ceil((yTop - y_origin) / stepY)) + extra
+
+		for m in range(m_min, m_max + 1):
+			base_y = m * stepY + y_origin
+			# "/"
+			y_x0 = base_y
+			y_xW = slope_v * width + base_y
+			y_lo, y_hi = min(y_x0, y_xW), max(y_x0, y_xW)
+			if not (y_hi < yBottom or y_lo > yTop):
+				path.moveToPoint_(NSPoint(0.0, y_x0))
+				path.lineToPoint_(NSPoint(width, y_xW))
+			# "\"
+			y_x0b = base_y
+			y_xWb = -slope_v * width + base_y
+			y_lo2, y_hi2 = min(y_x0b, y_xWb), max(y_x0b, y_xWb)
+			if not (y_hi2 < yBottom or y_lo2 > yTop):
+				path.moveToPoint_(NSPoint(0.0, y_x0b))
+				path.lineToPoint_(NSPoint(width, y_xWb))
+
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		if abs(angle_deg) > 0.001:
+			path.transformWithAngle_center_(angle_deg, pivot_y)
+		path.stroke()
+
+	@objc.python_method
+	def _ySnapOriginForLayer(self, layer, s):
 		"""Y snap / horizontal grid phase: baseline (0) in Unit mode, descender in Division mode."""
-		if Glyphs.defaults.get(PREF + '.mode', 'division') == 'unit':
+		if s.get('mode', 'division') == 'unit':
 			return 0.0
 		master = layer.associatedFontMaster()
 		return master.descender if master else -200.0
@@ -717,14 +916,14 @@ class SnappingGrid(GeneralPlugin):
 		return float(getattr(master, 'italicAngle', 0.0) or 0.0)
 
 	@objc.python_method
-	def _mainIntervals(self, layer):
-		mode = Glyphs.defaults.get(PREF + '.mode', 'division')
+	def _mainIntervals(self, layer, s):
+		mode = s.get('mode', 'division')
 		if mode == 'unit':
-			x = float(Glyphs.defaults.get(PREF + '.mainUnitX', 100))
-			y = float(Glyphs.defaults.get(PREF + '.mainUnitY', 100))
+			x = float(s.get('mainUnitX', 100))
+			y = float(s.get('mainUnitY', 100))
 		else:
-			divX = max(1, int(Glyphs.defaults.get(PREF + '.mainDivX', 4)))
-			divY = max(1, int(Glyphs.defaults.get(PREF + '.mainDivY', 4)))
+			divX = max(1, int(s.get('mainDivX', 4)))
+			divY = max(1, int(s.get('mainDivY', 4)))
 			master = layer.associatedFontMaster()
 			height = (master.ascender - master.descender) if master else 1000.0
 			x = layer.width / divX
@@ -732,29 +931,87 @@ class SnappingGrid(GeneralPlugin):
 		return x, y
 
 	@objc.python_method
-	def _subIntervals(self, mainX, mainY):
-		subDivX = max(1, int(Glyphs.defaults.get(PREF + '.subDivX', 2)))
-		subDivY = max(1, int(Glyphs.defaults.get(PREF + '.subDivY', 2)))
+	def _subIntervals(self, s, mainX, mainY):
+		subDivX = max(1, int(s.get('subDivX', 2)))
+		subDivY = max(1, int(s.get('subDivY', 2)))
 		return mainX / subDivX, mainY / subDivY
 
 	@objc.python_method
-	def _mainColor(self):
-		d = Glyphs.defaults
-		return NSColor.colorWithCalibratedRed_green_blue_alpha_(
-			float(d.get(PREF + '.mainR', 0.2)), float(d.get(PREF + '.mainG', 0.5)),
-			float(d.get(PREF + '.mainB', 1.0)), float(d.get(PREF + '.mainA', 0.4)))
+	def _colorFromList(self, rgba):
+		return NSColor.colorWithCalibratedRed_green_blue_alpha_(rgba[0], rgba[1], rgba[2], rgba[3])
 
 	@objc.python_method
-	def _subColor(self):
-		d = Glyphs.defaults
-		return NSColor.colorWithCalibratedRed_green_blue_alpha_(
-			float(d.get(PREF + '.subR', 0.2)), float(d.get(PREF + '.subG', 0.5)),
-			float(d.get(PREF + '.subB', 1.0)), float(d.get(PREF + '.subA', 0.15)))
+	def _defaultSettings(self):
+		return {
+			'mode':           'division',
+			'mainDivX':       4,
+			'mainDivY':       4,
+			'mainUnitX':      100,
+			'mainUnitY':      100,
+			'mainSync':       False,
+			'subDivX':        2,
+			'subDivY':        2,
+			'subSync':        False,
+			'mainColor':      [0.2, 0.5, 1.0, 0.4],
+			'subColor':       [0.2, 0.5, 1.0, 0.15],
+			'snapEnabled':    True,
+			'gridShape':      'square',
+			'triOrientation': 'horizontal',
+		}
+
+	@objc.python_method
+	def _getSettings(self, font):
+		"""font.userData → Glyphs.defaults（後方互換）→ ハードコードの順でフォールバック。"""
+		if font:
+			ud = font.userData.get('com.palf.SnappingGrid', None)
+			if ud:
+				s = self._defaultSettings()
+				s.update(ud)
+				return s
+		# Glyphs.defaults からのレガシーフォールバック
+		p = PREF; d = Glyphs.defaults
+		return {
+			'mode':           d.get(p + '.mode', 'division'),
+			'mainDivX':       int(d.get(p + '.mainDivX', 4)),
+			'mainDivY':       int(d.get(p + '.mainDivY', 4)),
+			'mainUnitX':      int(d.get(p + '.mainUnitX', 100)),
+			'mainUnitY':      int(d.get(p + '.mainUnitY', 100)),
+			'mainSync':       bool(d.get(p + '.mainSync', False)),
+			'subDivX':        int(d.get(p + '.subDivX', 2)),
+			'subDivY':        int(d.get(p + '.subDivY', 2)),
+			'subSync':        bool(d.get(p + '.subSync', False)),
+			'mainColor':      [float(d.get(p + '.mainR', 0.2)), float(d.get(p + '.mainG', 0.5)),
+			                   float(d.get(p + '.mainB', 1.0)), float(d.get(p + '.mainA', 0.4))],
+			'subColor':       [float(d.get(p + '.subR',  0.2)), float(d.get(p + '.subG',  0.5)),
+			                   float(d.get(p + '.subB',  1.0)), float(d.get(p + '.subA',  0.15))],
+			'snapEnabled':    bool(d.get(p + '.snapEnabled', True)),
+			'gridShape':      d.get(p + '.gridShape', 'square'),
+			'triOrientation': d.get(p + '.triOrientation', 'horizontal'),
+		}
+
+	@objc.python_method
+	def _saveSettings(self, font, s):
+		"""font.userData に保存し、Glyphs.defaults にも書いて新規フォント用テンプレートを更新する。"""
+		if font:
+			font.userData['com.palf.SnappingGrid'] = s
+		p = PREF; d = Glyphs.defaults
+		d[p + '.mode']           = s['mode']
+		d[p + '.mainDivX']       = s['mainDivX'];    d[p + '.mainDivY']  = s['mainDivY']
+		d[p + '.mainUnitX']      = s['mainUnitX'];   d[p + '.mainUnitY'] = s['mainUnitY']
+		d[p + '.mainSync']       = s['mainSync']
+		d[p + '.subDivX']        = s['subDivX'];     d[p + '.subDivY']   = s['subDivY']
+		d[p + '.subSync']        = s['subSync']
+		mc = s['mainColor']
+		d[p + '.mainR'] = mc[0]; d[p + '.mainG'] = mc[1]; d[p + '.mainB'] = mc[2]; d[p + '.mainA'] = mc[3]
+		sc = s['subColor']
+		d[p + '.subR']  = sc[0]; d[p + '.subG']  = sc[1]; d[p + '.subB']  = sc[2]; d[p + '.subA']  = sc[3]
+		d[p + '.snapEnabled']    = s['snapEnabled']
+		d[p + '.gridShape']      = s['gridShape']
+		d[p + '.triOrientation'] = s['triOrientation']
 
 	@objc.python_method
 	def _loadPrefs(self):
 		self.gridVisible = bool(Glyphs.defaults.get(PREF + '.gridVisible', True))
-		self.snapEnabled = bool(Glyphs.defaults.get(PREF + '.snapEnabled', True))
 
 	@objc.python_method
 	def __file__(self):
