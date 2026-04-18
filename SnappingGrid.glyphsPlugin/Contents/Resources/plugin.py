@@ -7,6 +7,7 @@ import math
 from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEDRAGGED, MOUSEUP, OFFCURVE
 from GlyphsApp.plugins import GeneralPlugin
 from AppKit import (
+	NSApplication,
 	NSMenuItem, NSColor, NSBezierPath, NSPoint,
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
@@ -535,7 +536,18 @@ class SnappingGrid(GeneralPlugin):
 			settingsItem = NSMenuItem(settingsLabel, callback=self._showSettings_, target=self)
 		else:
 			settingsItem = NSMenuItem(settingsLabel, self._showSettings_)
-		Glyphs.menu[EDIT_MENU].append(settingsItem)
+		inserted = False
+		try:
+			main_menu = NSApplication.sharedApplication().mainMenu()
+			edit_submenu = main_menu.itemAtIndex_(2).submenu()
+			if edit_submenu is not None:
+				# Same placement strategy as MasterGrid (Edit menu = item 2, insert index 12)
+				edit_submenu.insertItem_atIndex_(settingsItem, 12)
+				inserted = True
+		except Exception:
+			pass
+		if not inserted:
+			Glyphs.menu[EDIT_MENU].append(settingsItem)
 
 		Glyphs.addCallback(self._drawGrid_, DRAWBACKGROUND)
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEDRAGGED)
