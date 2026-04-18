@@ -11,7 +11,6 @@ from AppKit import (
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
 	NSAttributedString, NSFont, NSForegroundColorAttributeName, NSFontAttributeName,
-	NSApp,
 )
 from Foundation import NSObject, NSSelectorFromString
 
@@ -536,24 +535,7 @@ class SnappingGrid(GeneralPlugin):
 			settingsItem = NSMenuItem(settingsLabel, callback=self._showSettings_, target=self)
 		else:
 			settingsItem = NSMenuItem(settingsLabel, self._showSettings_)
-		inserted = False
-		try:
-			main_menu = NSApp.mainMenu()
-			for top_item in main_menu.itemArray():
-				submenu = top_item.submenu()
-				if submenu is None:
-					continue
-				for i, item in enumerate(submenu.itemArray()):
-					if 'Master Grid' in (item.title() or ''):
-						submenu.insertItem_atIndex_(settingsItem, i + 1)
-						inserted = True
-						break
-				if inserted:
-					break
-		except Exception:
-			pass
-		if not inserted:
-			Glyphs.menu[EDIT_MENU].append(settingsItem)
+		Glyphs.menu[EDIT_MENU].append(settingsItem)
 
 		Glyphs.addCallback(self._drawGrid_, DRAWBACKGROUND)
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEDRAGGED)
