@@ -39,9 +39,15 @@ class SettingsPanelController(NSObject):
 	_mainColorWell  = objc.IBOutlet()
 	_labelSubColor  = objc.IBOutlet()
 	_subColorWell   = objc.IBOutlet()
-	_snapCheck      = objc.IBOutlet()
-	_cancelButton   = objc.IBOutlet()
-	_okButton       = objc.IBOutlet()
+	_snapCheck       = objc.IBOutlet()
+	_cancelButton    = objc.IBOutlet()
+	_okButton        = objc.IBOutlet()
+	_labelGridShape  = objc.IBOutlet()
+	_radioSquare     = objc.IBOutlet()
+	_radioTriangle   = objc.IBOutlet()
+	_labelOrientation = objc.IBOutlet()
+	_radioHorizontal = objc.IBOutlet()
+	_radioVertical   = objc.IBOutlet()
 
 	def initWithPlugin_(self, plugin):
 		self = objc.super(SettingsPanelController, self).init()
@@ -112,6 +118,16 @@ class SettingsPanelController(NSObject):
 		self._mainSync.setAction_(sync_sel)
 		self._subSync.setTarget_(self)
 		self._subSync.setAction_(sync_sel)
+		shape_sel = NSSelectorFromString('shapeChanged:')
+		self._radioSquare.setTarget_(self)
+		self._radioSquare.setAction_(shape_sel)
+		self._radioTriangle.setTarget_(self)
+		self._radioTriangle.setAction_(shape_sel)
+		orient_sel = NSSelectorFromString('orientationChanged:')
+		self._radioHorizontal.setTarget_(self)
+		self._radioHorizontal.setAction_(orient_sel)
+		self._radioVertical.setTarget_(self)
+		self._radioVertical.setAction_(orient_sel)
 
 	def _applyLocalisation(self):
 		lx = Glyphs.localize
@@ -143,6 +159,22 @@ class SettingsPanelController(NSObject):
 		self._snapCheck.setTitle_(lx({'en': 'Enable snap', 'ja': 'スナップを有効にする', 'zh': '启用吸附', 'ko': '스냅 활성화'}))
 		self._cancelButton.setTitle_(lx({'en': 'Cancel', 'ja': 'キャンセル', 'zh': '取消', 'ko': '취소'}))
 		self._okButton.setTitle_(lx({'en': 'OK', 'ja': 'OK', 'zh': 'OK', 'ko': 'OK'}))
+		self._labelGridShape.setStringValue_(lx({
+			'en': 'Grid Shape:',
+			'ja': 'グリッド形状:',
+			'zh': '网格形状:',
+			'ko': '그리드 형태:',
+		}))
+		self._radioSquare.setTitle_(lx({'en': 'Square', 'ja': '方眼', 'zh': '方格', 'ko': '사각형'}))
+		self._radioTriangle.setTitle_(lx({'en': 'Triangle', 'ja': '三角形', 'zh': '三角形', 'ko': '삼각형'}))
+		self._labelOrientation.setStringValue_(lx({
+			'en': 'Orientation:',
+			'ja': '方向:',
+			'zh': '方向:',
+			'ko': '방향:',
+		}))
+		self._radioHorizontal.setTitle_(lx({'en': 'Horizontal', 'ja': '水平', 'zh': '水平', 'ko': '수평'}))
+		self._radioVertical.setTitle_(lx({'en': 'Vertical', 'ja': '垂直', 'zh': '垂直', 'ko': '수직'}))
 		self._applyReadableColours()
 
 	@objc.python_method
@@ -165,7 +197,8 @@ class SettingsPanelController(NSObject):
 
 		visit(self.panel.contentView())
 
-		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck):
+		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck,
+		            self._radioSquare, self._radioTriangle, self._radioHorizontal, self._radioVertical):
 			self._setButtonTitleColour_(btn, label_colour)
 		for btn in (self._cancelButton, self._okButton):
 			self._setButtonTitleColour_(btn, control_colour)
@@ -211,6 +244,22 @@ class SettingsPanelController(NSObject):
 		self._subColorWell.setColor_(NSColor.colorWithCalibratedRed_green_blue_alpha_(
 			float(d.get(p + '.subR', 0.2)), float(d.get(p + '.subG', 0.5)),
 			float(d.get(p + '.subB', 1.0)), float(d.get(p + '.subA', 0.15))))
+
+		shape = d.get(p + '.gridShape', 'square')
+		if shape == 'triangle':
+			self._radioTriangle.setState_(1)
+			self._radioSquare.setState_(0)
+		else:
+			self._radioSquare.setState_(1)
+			self._radioTriangle.setState_(0)
+		orient = d.get(p + '.triOrientation', 'horizontal')
+		if orient == 'vertical':
+			self._radioVertical.setState_(1)
+			self._radioHorizontal.setState_(0)
+		else:
+			self._radioHorizontal.setState_(1)
+			self._radioVertical.setState_(0)
+		self._updateOrientationAvailability()
 
 		self._snapCheck.setState_(1 if d.get(p + '.snapEnabled', True) else 0)
 		if self._mainSync.state() == 1:
@@ -306,6 +355,8 @@ class SettingsPanelController(NSObject):
 			d[p + '.subA'] = sc.alphaComponent()
 
 		d[p + '.snapEnabled'] = (self._snapCheck.state() == 1)
+		d[p + '.gridShape'] = 'triangle' if self._radioTriangle.state() == 1 else 'square'
+		d[p + '.triOrientation'] = 'vertical' if self._radioVertical.state() == 1 else 'horizontal'
 
 	def modeChanged_(self, sender):
 		# NSButton radio は兄弟間で自動排他されないことがある。sender を基準に明示的に片方だけ ON にする。
@@ -337,6 +388,30 @@ class SettingsPanelController(NSObject):
 		elif sender is self._subSync and self._subSync.state() == 1:
 			self._propagateSubHToV()
 		self._updateSyncFieldAvailability()
+
+	def shapeChanged_(self, sender):
+		if sender is self._radioTriangle:
+			self._radioTriangle.setState_(1)
+			self._radioSquare.setState_(0)
+		else:
+			self._radioSquare.setState_(1)
+			self._radioTriangle.setState_(0)
+		self._updateOrientationAvailability()
+
+	def orientationChanged_(self, sender):
+		if sender is self._radioVertical:
+			self._radioVertical.setState_(1)
+			self._radioHorizontal.setState_(0)
+		else:
+			self._radioHorizontal.setState_(1)
+			self._radioVertical.setState_(0)
+
+	@objc.python_method
+	def _updateOrientationAvailability(self):
+		is_tri = self._radioTriangle.state() == 1
+		for ctl in (self._labelOrientation, self._radioHorizontal, self._radioVertical):
+			if ctl is not None:
+				ctl.setEnabled_(is_tri)
 
 	@objc.python_method
 	def _propagateMainHToV(self):
@@ -506,23 +581,42 @@ class SnappingGrid(GeneralPlugin):
 				return
 			selectedSet = set(selectedNodes)
 
-			# Snap each node to the nearest grid intersection.
-			# Horizontal grid lines are flat (y = const), vertical lines are sheared.
-			# u = x - tan*(y - pivot) is constant along each vertical grid line.
-			# We snap u and y independently, then reconstruct the intersection x.
 			moves = {}
 			angle_deg = self._effectiveItalicAngleDegrees(layer)
 			tan_shear = math.tan(math.radians(angle_deg))
+			shape = Glyphs.defaults.get(PREF + '.gridShape', 'square')
 
 			for node in selectedNodes:
 				pos = node.position
-				snappedY = round((pos.y - ySnapOrigin) / stepY) * stepY + ySnapOrigin
+				# Un-shear to glyph space (italic shear is applied to grid lines but not stored positions)
 				if abs(tan_shear) < 1e-15:
-					snappedX = round(pos.x / stepX) * stepX
+					pu, pv = pos.x, pos.y
 				else:
-					u = pos.x - tan_shear * (pos.y - pivot)
-					u_snapped = round(u / stepX) * stepX
+					pu = pos.x - tan_shear * (pos.y - pivot)
+					pv = pos.y
+
+				if shape == 'triangle':
+					orient = Glyphs.defaults.get(PREF + '.triOrientation', 'horizontal')
+					if orient == 'horizontal':
+						# Lattice: P(m,n) = (m*stepX + n*stepX/2, n*stepY + ySnapOrigin)
+						n_snap = round((pv - ySnapOrigin) / stepY)
+						m_snap = round((pu - n_snap * stepX * 0.5) / stepX)
+						su = m_snap * stepX + n_snap * stepX * 0.5
+						sv = n_snap * stepY + ySnapOrigin
+					else:
+						# Lattice: P(m,n) = (n*stepX, m*stepY + n*stepY/2)
+						n_snap = round(pu / stepX)
+						m_snap = round((pv - n_snap * stepY * 0.5) / stepY)
+						su = n_snap * stepX
+						sv = m_snap * stepY + n_snap * stepY * 0.5
+					snappedX = su + tan_shear * (sv - pivot)
+					snappedY = sv
+				else:
+					# Square grid: snap u and y independently
+					snappedY = round((pv - ySnapOrigin) / stepY) * stepY + ySnapOrigin
+					u_snapped = round(pu / stepX) * stepX
 					snappedX = u_snapped + tan_shear * (snappedY - pivot)
+
 				dx = snappedX - pos.x
 				dy = snappedY - pos.y
 				if abs(dx) > 1e-6 or abs(dy) > 1e-6:
@@ -568,10 +662,19 @@ class SnappingGrid(GeneralPlugin):
 			grid_mode = Glyphs.defaults.get(PREF + '.mode', 'division')
 
 			pivot_y = self._shearPivotY(layer)
-			if subX > 0 and subY > 0:
-				self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer, pivot_y)
-			if mainX > 0 and mainY > 0:
-				self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer, pivot_y)
+			shape = Glyphs.defaults.get(PREF + '.gridShape', 'square')
+			if shape == 'triangle':
+				orient = Glyphs.defaults.get(PREF + '.triOrientation', 'horizontal')
+				y_origin = 0.0 if grid_mode == 'unit' else yBottom
+				if subX > 0 and subY > 0:
+					self._strokeTriGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), orient, y_origin, layer, pivot_y)
+				if mainX > 0 and mainY > 0:
+					self._strokeTriGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), orient, y_origin, layer, pivot_y)
+			else:
+				if subX > 0 and subY > 0:
+					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._subColor(), grid_mode, layer, pivot_y)
+				if mainX > 0 and mainY > 0:
+					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._mainColor(), grid_mode, layer, pivot_y)
 		except Exception:
 			print(traceback.format_exc())
 
@@ -604,6 +707,100 @@ class SnappingGrid(GeneralPlugin):
 		if abs(angle_deg) > 0.001:
 			path.transformWithAngle_center_(angle_deg, pivot_y)
 
+		path.stroke()
+
+	@objc.python_method
+	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, layer, pivot_y):
+		if orientation == 'vertical':
+			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
+		else:
+			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
+
+	@objc.python_method
+	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+		"""Horizontal tri-grid: horizontal lines + ±diagonal lines (slope = 2*stepY/stepX)."""
+		color.set()
+		path = NSBezierPath.alloc().init()
+		path.setLineWidth_(lineWidth)
+		slope = 2.0 * stepY / stepX
+
+		# Horizontal lines, anchored at y_origin
+		n_start = int(math.floor((yBottom - y_origin) / stepY))
+		n_end = int(math.ceil((yTop - y_origin) / stepY))
+		for n in range(n_start, n_end + 1):
+			y = y_origin + n * stepY
+			if yBottom <= y <= yTop:
+				path.moveToPoint_(NSPoint(0.0, y))
+				path.lineToPoint_(NSPoint(width, y))
+
+		# Diagonal lines pass through (m*stepX, y_origin).
+		# "/" : y - y_origin = slope*(x - m*stepX)  →  x = (y-y_origin)/slope + m*stepX
+		# "\" : y - y_origin = -slope*(x - m*stepX) →  x = m*stepX - (y-y_origin)/slope
+		extra = int(math.ceil((abs(yTop - y_origin) + abs(yBottom - y_origin)) / slope / stepX)) + 2
+		m_min = -extra
+		m_max = int(math.ceil(width / stepX)) + extra
+
+		for m in range(m_min, m_max + 1):
+			# "/"
+			x0 = (yBottom - y_origin) / slope + m * stepX
+			x1 = (yTop - y_origin) / slope + m * stepX
+			if not (x1 < 0 or x0 > width):
+				path.moveToPoint_(NSPoint(x0, yBottom))
+				path.lineToPoint_(NSPoint(x1, yTop))
+			# "\"
+			x0b = m * stepX - (yBottom - y_origin) / slope
+			x1b = m * stepX - (yTop - y_origin) / slope
+			if not (x1b > width or x0b < 0):
+				path.moveToPoint_(NSPoint(x0b, yBottom))
+				path.lineToPoint_(NSPoint(x1b, yTop))
+
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		if abs(angle_deg) > 0.001:
+			path.transformWithAngle_center_(angle_deg, pivot_y)
+		path.stroke()
+
+	@objc.python_method
+	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+		"""Vertical tri-grid: vertical lines + ±diagonal lines (slope = stepY/(2*stepX))."""
+		color.set()
+		path = NSBezierPath.alloc().init()
+		path.setLineWidth_(lineWidth)
+		slope_v = stepY / (2.0 * stepX)
+
+		# Vertical lines
+		u = stepX
+		while u < width:
+			path.moveToPoint_(NSPoint(u, yBottom))
+			path.lineToPoint_(NSPoint(u, yTop))
+			u += stepX
+
+		# Diagonal lines pass through (0, m*stepY + y_origin).
+		# "/" : y = slope_v*x + m*stepY + y_origin
+		# "\" : y = -slope_v*x + m*stepY + y_origin
+		extra = int(math.ceil((abs(yTop) + abs(yBottom)) / stepY + width * slope_v / stepY)) + 2
+		m_min = int(math.floor((yBottom - y_origin) / stepY)) - extra
+		m_max = int(math.ceil((yTop - y_origin) / stepY)) + extra
+
+		for m in range(m_min, m_max + 1):
+			base_y = m * stepY + y_origin
+			# "/"
+			y_x0 = base_y
+			y_xW = slope_v * width + base_y
+			y_lo, y_hi = min(y_x0, y_xW), max(y_x0, y_xW)
+			if not (y_hi < yBottom or y_lo > yTop):
+				path.moveToPoint_(NSPoint(0.0, y_x0))
+				path.lineToPoint_(NSPoint(width, y_xW))
+			# "\"
+			y_x0b = base_y
+			y_xWb = -slope_v * width + base_y
+			y_lo2, y_hi2 = min(y_x0b, y_xWb), max(y_x0b, y_xWb)
+			if not (y_hi2 < yBottom or y_lo2 > yTop):
+				path.moveToPoint_(NSPoint(0.0, y_x0b))
+				path.lineToPoint_(NSPoint(width, y_xWb))
+
+		angle_deg = self._effectiveItalicAngleDegrees(layer)
+		if abs(angle_deg) > 0.001:
+			path.transformWithAngle_center_(angle_deg, pivot_y)
 		path.stroke()
 
 	@objc.python_method
@@ -755,6 +952,8 @@ class SnappingGrid(GeneralPlugin):
 	def _loadPrefs(self):
 		self.gridVisible = bool(Glyphs.defaults.get(PREF + '.gridVisible', True))
 		self.snapEnabled = bool(Glyphs.defaults.get(PREF + '.snapEnabled', True))
+		self.gridShape = Glyphs.defaults.get(PREF + '.gridShape', 'square')
+		self.triOrientation = Glyphs.defaults.get(PREF + '.triOrientation', 'horizontal')
 
 	@objc.python_method
 	def __file__(self):

@@ -33,18 +33,74 @@
                 <outlet property="_subV" destination="subV" id="out-subV"/>
                 <outlet property="_subVStep" destination="subVStep" id="out-subVStep"/>
                 <outlet property="panel" destination="panel1" id="out-panel"/>
+                <outlet property="_labelGridShape" destination="labelGridShape" id="out-label-gridshape"/>
+                <outlet property="_radioSquare" destination="radioSquare" id="out-radio-square"/>
+                <outlet property="_radioTriangle" destination="radioTriangle" id="out-radio-triangle"/>
+                <outlet property="_labelOrientation" destination="labelOrientation" id="out-label-orientation"/>
+                <outlet property="_radioHorizontal" destination="radioHorizontal" id="out-radio-horizontal"/>
+                <outlet property="_radioVertical" destination="radioVertical" id="out-radio-vertical"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Snapping Grid Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="panel1" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="0.0" y="0.0" width="400" height="340"/>
+            <rect key="contentRect" x="0.0" y="0.0" width="400" height="390"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1569"/>
             <view key="contentView" id="contentView1">
-                <rect key="frame" x="0.0" y="0.0" width="400" height="340"/>
+                <rect key="frame" x="0.0" y="0.0" width="400" height="390"/>
                 <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                 <subviews>
+                    <!-- Grid Shape row -->
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridShape">
+                        <rect key="frame" x="20" y="362" width="84" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Grid Shape:" id="gs-label-cell"/>
+                    </textField>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioSquare">
+                        <rect key="frame" x="112" y="360" width="100" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Square" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gs-sq-cell"/>
+                        <connections>
+                            <action selector="shapeChanged:" target="-2" id="rsquare-action"/>
+                        </connections>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioTriangle">
+                        <rect key="frame" x="222" y="360" width="100" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Triangle" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gs-tri-cell"/>
+                        <connections>
+                            <action selector="shapeChanged:" target="-2" id="rtriangle-action"/>
+                        </connections>
+                    </button>
+                    <!-- Orientation row -->
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelOrientation">
+                        <rect key="frame" x="20" y="336" width="84" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Orientation:" id="or-label-cell"/>
+                    </textField>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioHorizontal">
+                        <rect key="frame" x="112" y="334" width="100" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Horizontal" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="or-h-cell"/>
+                        <connections>
+                            <action selector="orientationChanged:" target="-2" id="rhoriz-action"/>
+                        </connections>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioVertical">
+                        <rect key="frame" x="222" y="334" width="100" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="radio" title="Vertical" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="or-v-cell"/>
+                        <connections>
+                            <action selector="orientationChanged:" target="-2" id="rvert-action"/>
+                        </connections>
+                    </button>
+                    <!-- Separator before Grid Mode -->
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep0">
+                        <rect key="frame" x="20" y="318" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <!-- Grid Mode row (y shifted +50 from original 302→352… keeping at 302 since window expanded at top) -->
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridMode">
                         <rect key="frame" x="20" y="302" width="80" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
