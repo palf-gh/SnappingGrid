@@ -22,8 +22,8 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 
 ### Usage
 
-- `View` menu → **Show Snapping Grid** to toggle visibility
-- `Edit` menu → **Snapping Grid Settings…** to configure
+- **View** menu → **Show Snapping Grid** to toggle visibility
+- **Edit** menu → **Snapping Grid Settings…** to configure
 
 ### Settings
 
@@ -32,9 +32,9 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 | Grid Shape | Square / Triangle |
 | Orientation | Horizontal / Vertical (triangle only) |
 | Grid Mode | Division / Unit |
-| Main Grid H/V | Main grid spacing (Sync H/V available) |
-| Sub Grid H/V | Sub grid subdivisions |
-| Main/Sub Color | Grid line colors |
+| Main Grid | H/V spacing (Sync H/V available) |
+| Sub Grid (main subdivisions) | Sub grid subdivisions |
+| Main Color / Sub Color | Grid line colors |
 | Enable snap | Toggle node snapping |
 | Reset | Restore default values |
 
@@ -47,32 +47,32 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 ### 機能
 
 - **メイングリッド / サブグリッド**の表示
-- グリッド方式の切り替え（Division / Unit）
-- H/V 個別設定と同期
+- グリッド方式の切り替え（分割数 / Unit数）
+- H/V 個別設定と縦横同期
 - メイン色・サブ色のカスタマイズ
 - **三角形グリッド（六角形グリッド）** ─ 水平・垂直方向を選択可能
 - ノード移動時のスナップ（選択ハンドル連動）
 - イタリック角度に対応したグリッドシアー
 - **フォントファイルごとに設定を保存**
-- 英語・日本語・简体中文・한국어 の UI ローカライズ
+- UI ローカライズ対応：English、日本語、简体中文、한국어
 
 ### 使い方
 
-- `View` メニュー → **Show Snapping Grid** でグリッドの表示/非表示を切り替え
-- `Edit` メニュー → **Snapping Grid Settings…** で設定を変更
+- **表示**メニュー → **スナッピンググリッドを表示** でグリッドの表示/非表示を切り替え
+- **編集**メニュー → **スナッピンググリッドの設定…** で設定を変更
 
 ### 設定項目
 
 | 項目 | 内容 |
 |---|---|
-| Grid Shape | Square（方眼）/ Triangle（三角形） |
-| Orientation | Horizontal / Vertical（三角形グリッドの向き） |
-| Grid Mode | Division（分割数）/ Unit（unit数） |
-| Main Grid H/V | メイングリッドの間隔（Sync H/V で縦横同期） |
-| Sub Grid H/V | サブグリッドの分割数 |
-| Main/Sub Color | グリッド線の色 |
-| Enable snap | ノードの自動スナップ ON/OFF |
-| Reset | 設定をデフォルト値に戻す |
+| グリッド形状 | 方眼 / 三角形 |
+| 方向 | 水平 / 垂直（三角形グリッドのみ） |
+| グリッド方式 | 分割数 / Unit数 |
+| メイングリッド | H/V 間隔（縦横同期あり） |
+| サブグリッド（メインの分割数） | サブグリッドの分割数 |
+| メイン色 / サブ色 | グリッド線の色 |
+| スナップを有効にする | ノードの自動スナップ ON/OFF |
+| リセット | 設定をデフォルト値に戻す |
 
 ---
 
@@ -94,21 +94,21 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 
 ### 使用方法
 
-- `View` 菜单 → **Show Snapping Grid** 切换网格显示/隐藏
-- `Edit` 菜单 → **Snapping Grid Settings…** 打开设置
+- **显示**菜单 → **显示吸附网格** 切换网格显示/隐藏
+- **编辑**菜单 → **吸附网格设置…** 打开设置
 
 ### 设置项目
 
 | 项目 | 说明 |
 |---|---|
-| Grid Shape | Square（方格）/ Triangle（三角形） |
-| Orientation | Horizontal / Vertical（三角形网格方向） |
-| Grid Mode | Division（分割数）/ Unit（Unit数） |
-| Main Grid H/V | 主网格间距（可同步 H/V） |
-| Sub Grid H/V | 子网格分割数 |
-| Main/Sub Color | 网格线颜色 |
-| Enable snap | 启用/禁用节点吸附 |
-| Reset | 恢复默认值 |
+| 网格形状 | 方格 / 三角形 |
+| 方向 | 水平 / 垂直（仅三角形网格） |
+| 网格方式 | 分割数 / Unit数 |
+| 主网格 | H/V 间距（可同步 H/V） |
+| 子网格（主网格分割数） | 子网格分割数 |
+| 主色 / 子色 | 网格线颜色 |
+| 启用吸附 | 启用/禁用节点吸附 |
+| 重置 | 恢复默认值 |
 
 ---
 
@@ -119,8 +119,8 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 ### 기능
 
 - **메인 그리드 / 서브 그리드** 표시
-- 그리드 방식 전환（Division / Unit）
-- H/V 개별 설정 및 동기화
+- 그리드 방식 전환（분할 수 / Unit 수）
+- H/V 개별 설정 및 H/V 동기화
 - 메인/서브 색상 커스터마이징
 - **삼각형 그리드（육각형 그리드）** ─ 수평/수직 방향 선택 가능
 - 노드 이동 시 자동 스냅（핸들 연동）
@@ -130,21 +130,21 @@ A Glyphs 3 plugin that displays a customizable snapping grid and snaps nodes to 
 
 ### 사용 방법
 
-- `View` 메뉴 → **Show Snapping Grid** 으로 그리드 표시/숨기기 전환
-- `Edit` 메뉴 → **Snapping Grid Settings…** 으로 설정 변경
+- **보기** 메뉴 → **스냅 그리드 표시** 로 그리드 표시/숨기기 전환
+- **편집** 메뉴 → **스냅 그리드 설정…** 으로 설정 변경
 
 ### 설정 항목
 
 | 항목 | 내용 |
 |---|---|
-| Grid Shape | Square（사각형）/ Triangle（삼각형） |
-| Orientation | Horizontal / Vertical（삼각형 그리드 방향） |
-| Grid Mode | Division（분할 수）/ Unit（Unit 수） |
-| Main Grid H/V | 메인 그리드 간격（Sync H/V로 동기화） |
-| Sub Grid H/V | 서브 그리드 분할 수 |
-| Main/Sub Color | 그리드 선 색상 |
-| Enable snap | 노드 자동 스냅 ON/OFF |
-| Reset | 기본값으로 초기화 |
+| 그리드 형태 | 사각형 / 삼각형 |
+| 방향 | 수평 / 수직（삼각형 그리드만） |
+| 그리드 방식 | 분할 수 / Unit 수 |
+| 메인 그리드 | H/V 간격（H/V 동기화 가능） |
+| 서브 그리드（메인 분할 수） | 서브 그리드 분할 수 |
+| 메인 색상 / 서브 색상 | 그리드 선 색상 |
+| 스냅 활성화 | 노드 자동 스냅 ON/OFF |
+| 초기화 | 기본값으로 초기화 |
 
 ---
 
