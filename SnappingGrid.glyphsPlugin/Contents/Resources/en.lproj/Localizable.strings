@@ -1,0 +1,36 @@
+/* Plugin name */
+"plugin.name" = "Snapping Grid";
+
+/* View menu */
+"menu.show" = "Show Snapping Grid";
+
+/* Edit menu */
+"menu.settings" = "Snapping Grid Settings\U2026";
+
+/* Settings window title */
+"settings.title" = "Snapping Grid Settings";
+
+/* Grid mode */
+"settings.mode.label" = "Grid Mode:";
+"settings.mode.division" = "Division";
+"settings.mode.unit" = "Unit";
+
+/* Main grid */
+"settings.main.title" = "Main Grid";
+
+/* Sub grid */
+"settings.sub.title" = "Sub Grid (main subdivisions)";
+
+/* Sync */
+"settings.sync" = "Sync H/V";
+
+/* Colors */
+"settings.color.main" = "Main Color:";
+"settings.color.sub" = "Sub Color:";
+
+/* Snap */
+"settings.snap" = "Enable snap";
+
+/* Buttons */
+"settings.cancel" = "Cancel";
+"settings.ok" = "OK";
