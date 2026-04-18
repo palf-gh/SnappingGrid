@@ -1,50 +1,37 @@
 # SnappingGrid
 
-Glyphs 3 用の、スナップ可能なグリッド表示プラグインです。  
-グリッドの表示と、ノード移動時のスナップを提供します。
+Glyphs 3 用のグリッド表示＆スナッププラグインです。
 
 ## Features
 
-- メイングリッドとサブグリッドの表示
+- **メイングリッド / サブグリッド**の表示
 - グリッド方式の切り替え（Division / Unit）
-- H/V 個別設定と同期設定
+- H/V 個別設定と同期
 - メイン色・サブ色のカスタマイズ
+- **三角形グリッド（六角形グリッド）** ─ 水平・垂直方向を選択可能
 - ノード移動時のスナップ（選択ハンドル連動）
+- イタリック角度に対応したグリッドシアー
+- **フォントファイルごとに設定を保存**
 - 英語・日本語・简体中文・한국어 の UI ローカライズ
-
-## Requirements
-
-- macOS
-- [Glyphs 3](https://glyphsapp.com/)
-
-## Installation
-
-以下のコマンドでプラグインを Glyphs 3 の Plugins フォルダへシンボリックリンクします。
-
-```bash
-ln -sf "$(pwd)/SnappingGrid.glyphsPlugin" \
-  "$HOME/Library/Application Support/Glyphs 3/Plugins/SnappingGrid.glyphsPlugin"
-```
-
-その後、Glyphs 3 を再起動してください。
 
 ## Usage
 
-- `View` メニューから **Show Snapping Grid** を切り替えて表示/非表示
-- `Edit` メニューから **Snapping Grid Settings…** を開いて設定変更
-- 設定内容:
-  - Grid Mode（Division / Unit）
-  - Main Grid（H/V, Sync H/V）
-  - Sub Grid（subdivision, Sync H/V）
-  - Main/Sub Color
-  - Enable snap
+- `View` メニュー → **Show Snapping Grid** でグリッドの表示/非表示を切り替え
+- `Edit` メニュー → **Snapping Grid Settings…** で設定を変更
 
-## Development
+### Settings
 
-- Bundle ID: `com.palf.SnappingGrid`
-- Main source: `SnappingGrid.glyphsPlugin/Contents/Resources/plugin.py`
+| 項目 | 内容 |
+|---|---|
+| Grid Shape | Square（方眼）/ Triangle（三角形） |
+| Orientation | Horizontal / Vertical（三角形グリッドの向き） |
+| Grid Mode | Division（分割数）/ Unit（unit数） |
+| Main Grid H/V | メイングリッドの間隔（Sync H/V で縦横同期） |
+| Sub Grid H/V | サブグリッドの分割数 |
+| Main/Sub Color | グリッド線の色 |
+| Enable snap | ノードの自動スナップ ON/OFF |
+| Reset | 設定をデフォルト値に戻す |
 
-## Licence
+## License
 
-このプロジェクトは MIT Licence のもとで公開されています。  
-詳細は `LICENSE` を参照してください。
+Apache License 2.0 — 詳細は [LICENSE](LICENSE) を参照してください。
