@@ -7,11 +7,11 @@ import math
 from GlyphsApp import Glyphs, EDIT_MENU, VIEW_MENU, DRAWBACKGROUND, MOUSEDRAGGED, MOUSEUP, OFFCURVE
 from GlyphsApp.plugins import GeneralPlugin
 from AppKit import (
+	NSApplication,
 	NSMenuItem, NSColor, NSBezierPath, NSPoint,
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
 	NSAttributedString, NSFont, NSForegroundColorAttributeName, NSFontAttributeName,
-	NSApp,
 )
 from Foundation import NSObject, NSSelectorFromString
 
@@ -538,18 +538,12 @@ class SnappingGrid(GeneralPlugin):
 			settingsItem = NSMenuItem(settingsLabel, self._showSettings_)
 		inserted = False
 		try:
-			main_menu = NSApp.mainMenu()
-			for top_item in main_menu.itemArray():
-				submenu = top_item.submenu()
-				if submenu is None:
-					continue
-				for i, item in enumerate(submenu.itemArray()):
-					if (item.title() or '') == 'Paste':
-						submenu.insertItem_atIndex_(settingsItem, i + 1)
-						inserted = True
-						break
-				if inserted:
-					break
+			main_menu = NSApplication.sharedApplication().mainMenu()
+			edit_submenu = main_menu.itemAtIndex_(2).submenu()
+			if edit_submenu is not None:
+				# Same placement strategy as MasterGrid (Edit menu = item 2, insert index 12)
+				edit_submenu.insertItem_atIndex_(settingsItem, 12)
+				inserted = True
 		except Exception:
 			pass
 		if not inserted:
