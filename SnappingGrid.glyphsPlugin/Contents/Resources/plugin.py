@@ -12,6 +12,7 @@ from AppKit import (
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
 	NSAttributedString, NSFont, NSForegroundColorAttributeName, NSFontAttributeName,
+	NSEvent,
 )
 from Foundation import NSObject, NSSelectorFromString
 
@@ -553,6 +554,8 @@ class SnappingGrid(GeneralPlugin):
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEDRAGGED)
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEUP)
 
+		self._installArrowKeyMonitor()
+
 	def _toggleGrid_(self, sender):
 		self.gridVisible = not self.gridVisible
 		self._showItem.setState_(1 if self.gridVisible else 0)
@@ -657,6 +660,110 @@ class SnappingGrid(GeneralPlugin):
 				node.position = NSPoint(p.x + dx, p.y + dy)
 		except Exception:
 			print(traceback.format_exc())
+
+	@objc.python_method
+	def _installArrowKeyMonitor(self):
+		"""グリッド表示中、矢印キーをサブグリッド単位、Shift+矢印キーをメイングリッド単位の移動に差し替える。"""
+		NSEventMaskKeyDown = 1 << 10
+
+		def handler(event):
+			try:
+				return self._handleArrowKeyEvent(event)
+			except Exception:
+				print(traceback.format_exc())
+				return event
+
+		self._arrowKeyMonitor = NSEvent.addLocalMonitorForEventsMatchingMask_handler_(
+			NSEventMaskKeyDown, handler
+		)
+
+	@objc.python_method
+	def _handleArrowKeyEvent(self, event):
+		if not self.gridVisible:
+			return event
+
+		keyCode = event.keyCode()
+		# 123=Left, 124=Right, 125=Down, 126=Up
+		if keyCode not in (123, 124, 125, 126):
+			return event
+
+		SHIFT, CONTROL, OPTION, COMMAND = 1 << 17, 1 << 18, 1 << 19, 1 << 20
+		flags = event.modifierFlags() & 0xFFFF0000
+		# Shift 単独以外の修飾キー（Cmd/Option/Control）は Glyphs の既定動作に委ねる
+		if flags & (CONTROL | OPTION | COMMAND):
+			return event
+
+		window = NSApplication.sharedApplication().keyWindow()
+		if window is None:
+			return event
+		# 設定パネルがキーウィンドウのときは横取りしない
+		sc = getattr(self, '_settingsController', None)
+		if sc is not None:
+			panel = getattr(sc, 'panel', None)
+			if panel is not None and window is panel:
+				return event
+		# テキスト編集中（フィールドエディタ）は横取りしない
+		responder = window.firstResponder()
+		if responder is not None and responder.className() == 'NSTextView':
+			return event
+
+		font = Glyphs.font
+		if not font:
+			return event
+		layers = font.selectedLayers
+		if not layers:
+			return event
+		layer = layers[0]
+
+		selectedNodes = [n for n in layer.selection
+		                 if hasattr(n, 'position') and hasattr(n, 'type')]
+		if not selectedNodes:
+			return event
+
+		s = self._getSettings(font)
+		mainX, mainY = self._mainIntervals(layer, s)
+		if mainX <= 0 or mainY <= 0:
+			return event
+
+		if flags & SHIFT:
+			stepX, stepY = mainX, mainY
+		else:
+			stepX, stepY = self._subIntervals(s, mainX, mainY)
+			if stepX <= 0 or stepY <= 0:
+				stepX, stepY = mainX, mainY
+
+		dx, dy = 0.0, 0.0
+		if keyCode == 123:
+			dx = -stepX
+		elif keyCode == 124:
+			dx = stepX
+		elif keyCode == 125:
+			dy = -stepY
+		elif keyCode == 126:
+			dy = stepY
+
+		selectedSet = set(selectedNodes)
+		moves = {id(n): (n, dx, dy) for n in selectedNodes}
+		# オンカーブノードに付随するオフカーブハンドルも一緒に動かす
+		for nid, (node, ddx, ddy) in list(moves.items()):
+			if node.type == OFFCURVE:
+				continue
+			for neighbor in (node.prevNode, node.nextNode):
+				if neighbor is None:
+					continue
+				if neighbor.type != OFFCURVE:
+					continue
+				if neighbor in selectedSet:
+					continue
+				if id(neighbor) in moves:
+					continue
+				moves[id(neighbor)] = (neighbor, ddx, ddy)
+
+		for node, ddx, ddy in moves.values():
+			p = node.position
+			node.position = NSPoint(p.x + ddx, p.y + ddy)
+
+		return None
 
 	@objc.python_method
 	def _drawGrid_(self, layer, info):
