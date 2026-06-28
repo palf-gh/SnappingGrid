@@ -1016,8 +1016,11 @@ class SnappingGrid(GeneralPlugin):
 			master = layer.associatedFontMaster()
 			yTop = master.ascender if master else 800.0
 			yBottom = master.descender if master else -200.0
-			scale = info.get('Scale', 1.0) if isinstance(info, dict) else 1.0
-			lineWidth = 1.0 / scale
+			try:
+				scale = float(info['Scale'])
+			except Exception:
+				scale = 1.0
+			lineWidth = 1.0 / max(scale, 0.01)
 
 			s = self._effectiveSettings(Glyphs.font)
 			mainX, mainY = self._mainIntervals(layer, s)
