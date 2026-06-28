@@ -40,26 +40,53 @@
                 <outlet property="_radioHorizontal" destination="radioHorizontal" id="out-radio-horizontal"/>
                 <outlet property="_radioVertical" destination="radioVertical" id="out-radio-vertical"/>
                 <outlet property="_resetButton" destination="resetButton" id="out-reset"/>
+                <outlet property="_labelGridGap" destination="labelGridGap" id="out-label-grid-gap"/>
+                <outlet property="_gapEnable" destination="gapEnable" id="out-gap-enable"/>
+                <outlet property="_gapSyncMainSub" destination="gapSyncMainSub" id="out-gap-sync-main-sub"/>
+                <outlet property="_labelMainGap" destination="labelMainGap" id="out-label-main-gap"/>
+                <outlet property="_captionMainGapH" destination="labelMainGapH" id="out-caption-main-gap-h"/>
+                <outlet property="_captionMainGapV" destination="labelMainGapV" id="out-caption-main-gap-v"/>
+                <outlet property="_mainGapH" destination="mainGapH" id="out-main-gap-h"/>
+                <outlet property="_mainGapHStep" destination="mainGapHStep" id="out-main-gap-h-step"/>
+                <outlet property="_mainGapV" destination="mainGapV" id="out-main-gap-v"/>
+                <outlet property="_mainGapVStep" destination="mainGapVStep" id="out-main-gap-v-step"/>
+                <outlet property="_gapSyncHV" destination="gapSyncHV" id="out-gap-sync-hv"/>
+                <outlet property="_labelSubGap" destination="labelSubGap" id="out-label-sub-gap"/>
+                <outlet property="_captionSubGapH" destination="labelSubGapH" id="out-caption-sub-gap-h"/>
+                <outlet property="_captionSubGapV" destination="labelSubGapV" id="out-caption-sub-gap-v"/>
+                <outlet property="_subGapH" destination="subGapH" id="out-sub-gap-h"/>
+                <outlet property="_subGapHStep" destination="subGapHStep" id="out-sub-gap-h-step"/>
+                <outlet property="_subGapV" destination="subGapV" id="out-sub-gap-v"/>
+                <outlet property="_subGapVStep" destination="subGapVStep" id="out-sub-gap-v-step"/>
+                <outlet property="_labelGridOffset" destination="labelGridOffset" id="out-label-grid-offset"/>
+                <outlet property="_captionOffsetH" destination="labelOffsetH" id="out-caption-offset-h"/>
+                <outlet property="_captionOffsetV" destination="labelOffsetV" id="out-caption-offset-v"/>
+                <outlet property="_offsetH" destination="offsetH" id="out-offset-h"/>
+                <outlet property="_offsetHStep" destination="offsetHStep" id="out-offset-h-step"/>
+                <outlet property="_offsetV" destination="offsetV" id="out-offset-v"/>
+                <outlet property="_offsetVStep" destination="offsetVStep" id="out-offset-v-step"/>
+                <outlet property="_offsetSyncHV" destination="offsetSyncHV" id="out-offset-sync-hv"/>
+                <outlet property="_followItalic" destination="followItalic" id="out-follow-italic"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Snapping Grid Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="panel1" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="0.0" y="0.0" width="400" height="390"/>
+            <rect key="contentRect" x="0.0" y="0.0" width="400" height="520"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1569"/>
             <view key="contentView" id="contentView1">
-                <rect key="frame" x="0.0" y="0.0" width="400" height="390"/>
+                <rect key="frame" x="0.0" y="0.0" width="400" height="520"/>
                 <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                 <subviews>
                     <!-- Grid Shape row -->
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridShape">
-                        <rect key="frame" x="20" y="362" width="84" height="17"/>
+                        <rect key="frame" x="20" y="492" width="84" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="Grid Shape:" id="gs-label-cell"/>
                     </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioSquare">
-                        <rect key="frame" x="112" y="360" width="100" height="18"/>
+                        <rect key="frame" x="112" y="490" width="100" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Square" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gs-sq-cell"/>
                         <connections>
@@ -67,7 +94,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioTriangle">
-                        <rect key="frame" x="222" y="360" width="100" height="18"/>
+                        <rect key="frame" x="222" y="490" width="100" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Triangle" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gs-tri-cell"/>
                         <connections>
@@ -76,12 +103,12 @@
                     </button>
                     <!-- Orientation row -->
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelOrientation">
-                        <rect key="frame" x="20" y="336" width="84" height="17"/>
+                        <rect key="frame" x="20" y="466" width="84" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="Orientation:" id="or-label-cell"/>
                     </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioHorizontal">
-                        <rect key="frame" x="112" y="334" width="100" height="18"/>
+                        <rect key="frame" x="112" y="464" width="100" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Horizontal" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="or-h-cell"/>
                         <connections>
@@ -89,7 +116,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioVertical">
-                        <rect key="frame" x="222" y="334" width="100" height="18"/>
+                        <rect key="frame" x="222" y="464" width="100" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Vertical" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="or-v-cell"/>
                         <connections>
@@ -98,17 +125,17 @@
                     </button>
                     <!-- Separator before Grid Mode -->
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep0">
-                        <rect key="frame" x="20" y="318" width="360" height="5"/>
+                        <rect key="frame" x="20" y="448" width="360" height="5"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
                     <!-- Grid Mode row (y shifted +50 from original 302→352… keeping at 302 since window expanded at top) -->
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridMode">
-                        <rect key="frame" x="20" y="302" width="80" height="17"/>
+                        <rect key="frame" x="20" y="432" width="80" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="Grid Mode:" id="08n-Lr-6OH"/>
                     </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioDivision">
-                        <rect key="frame" x="108" y="300" width="100" height="18"/>
+                        <rect key="frame" x="108" y="430" width="100" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Division" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="FJD-W6-Tez"/>
                         <connections>
@@ -116,7 +143,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="radioUnit">
-                        <rect key="frame" x="218" y="300" width="80" height="18"/>
+                        <rect key="frame" x="218" y="430" width="80" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="radio" title="Unit" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5KI-HW-llj"/>
                         <connections>
@@ -124,30 +151,30 @@
                         </connections>
                     </button>
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep1">
-                        <rect key="frame" x="20" y="285" width="360" height="5"/>
+                        <rect key="frame" x="20" y="415" width="360" height="5"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainGrid">
-                        <rect key="frame" x="20" y="264" width="360" height="17"/>
+                        <rect key="frame" x="20" y="394" width="360" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="Main Grid" id="LHb-Rf-9t9">
                             <font key="font" metaFont="systemBold"/>
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelH1">
-                        <rect key="frame" x="20" y="238" width="20" height="17"/>
+                        <rect key="frame" x="20" y="368" width="20" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="H:" id="MwW-JH-6Ym"/>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainH">
-                        <rect key="frame" x="44" y="236" width="56" height="22"/>
+                        <rect key="frame" x="44" y="366" width="56" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="4" drawsBackground="YES" id="ee3-Wc-SJF">
                             <font key="font" metaFont="system"/>
                         </textFieldCell>
                     </textField>
                     <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainHStep">
-                        <rect key="frame" x="102" y="236" width="19" height="22"/>
+                        <rect key="frame" x="102" y="366" width="19" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <stepperCell key="cell" continuous="YES" id="W3K-wA-ZhS"/>
                         <connections>
@@ -155,19 +182,19 @@
                         </connections>
                     </stepper>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelV1">
-                        <rect key="frame" x="148" y="238" width="20" height="17"/>
+                        <rect key="frame" x="148" y="368" width="20" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="V:" id="Zl5-hX-ldm"/>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainV">
-                        <rect key="frame" x="172" y="236" width="56" height="22"/>
+                        <rect key="frame" x="172" y="366" width="56" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="4" drawsBackground="YES" id="Eon-qJ-LAD">
                             <font key="font" metaFont="system"/>
                         </textFieldCell>
                     </textField>
                     <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainVStep">
-                        <rect key="frame" x="230" y="236" width="19" height="22"/>
+                        <rect key="frame" x="230" y="366" width="19" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <stepperCell key="cell" continuous="YES" id="Ouc-Jp-9Ki"/>
                         <connections>
@@ -175,35 +202,35 @@
                         </connections>
                     </stepper>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainSync">
-                        <rect key="frame" x="265" y="237" width="115" height="18"/>
+                        <rect key="frame" x="265" y="367" width="115" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="HhF-gO-b8D"/>
                     </button>
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep2">
-                        <rect key="frame" x="20" y="222" width="360" height="5"/>
+                        <rect key="frame" x="20" y="352" width="360" height="5"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubGrid">
-                        <rect key="frame" x="20" y="201" width="360" height="17"/>
+                        <rect key="frame" x="20" y="331" width="360" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="Sub Grid (main subdivisions)" id="ajd-7c-fKG">
                             <font key="font" metaFont="systemBold"/>
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelH2">
-                        <rect key="frame" x="20" y="175" width="20" height="17"/>
+                        <rect key="frame" x="20" y="305" width="20" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="H:" id="tgk-6z-nhs"/>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subH">
-                        <rect key="frame" x="44" y="173" width="56" height="22"/>
+                        <rect key="frame" x="44" y="303" width="56" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="2" drawsBackground="YES" id="RzL-Jx-Ui9">
                             <font key="font" metaFont="system"/>
                         </textFieldCell>
                     </textField>
                     <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subHStep">
-                        <rect key="frame" x="102" y="173" width="19" height="22"/>
+                        <rect key="frame" x="102" y="303" width="19" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <stepperCell key="cell" continuous="YES" id="z0m-dv-1H1"/>
                         <connections>
@@ -211,19 +238,19 @@
                         </connections>
                     </stepper>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelV2">
-                        <rect key="frame" x="148" y="175" width="20" height="17"/>
+                        <rect key="frame" x="148" y="305" width="20" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" title="V:" id="gRk-iT-AoC"/>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subV">
-                        <rect key="frame" x="172" y="173" width="56" height="22"/>
+                        <rect key="frame" x="172" y="303" width="56" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="2" drawsBackground="YES" id="iKD-oD-Bim">
                             <font key="font" metaFont="system"/>
                         </textFieldCell>
                     </textField>
                     <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subVStep">
-                        <rect key="frame" x="230" y="173" width="19" height="22"/>
+                        <rect key="frame" x="230" y="303" width="19" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <stepperCell key="cell" continuous="YES" id="BNo-0X-qBf"/>
                         <connections>
@@ -231,14 +258,169 @@
                         </connections>
                     </stepper>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subSync">
-                        <rect key="frame" x="265" y="174" width="115" height="18"/>
+                        <rect key="frame" x="265" y="304" width="115" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Ys2-Uh-EWy"/>
                     </button>
                     <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep3">
-                        <rect key="frame" x="20" y="158" width="360" height="5"/>
+                        <rect key="frame" x="20" y="288" width="360" height="5"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridGap">
+                        <rect key="frame" x="20" y="265" width="96" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Grid Gap:" id="gap-label-cell">
+                            <font key="font" metaFont="systemBold"/>
+                        </textFieldCell>
+                    </textField>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gapEnable">
+                        <rect key="frame" x="120" y="263" width="84" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Enable" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gap-enable-cell"/>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gapSyncMainSub">
+                        <rect key="frame" x="214" y="263" width="166" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Link Main/Sub" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gap-sync-main-sub-cell"/>
+                    </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainGap">
+                        <rect key="frame" x="20" y="239" width="40" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Main" id="main-gap-label-cell"/>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainGapH">
+                        <rect key="frame" x="64" y="239" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="H:" id="main-gap-h-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainGapH">
+                        <rect key="frame" x="88" y="237" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="main-gap-h-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainGapHStep">
+                        <rect key="frame" x="140" y="237" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="main-gap-h-step-cell"/>
+                    </stepper>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainGapV">
+                        <rect key="frame" x="170" y="239" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="V:" id="main-gap-v-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainGapV">
+                        <rect key="frame" x="194" y="237" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="main-gap-v-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mainGapVStep">
+                        <rect key="frame" x="246" y="237" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="main-gap-v-step-cell"/>
+                    </stepper>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gapSyncHV">
+                        <rect key="frame" x="276" y="238" width="104" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="gap-sync-hv-cell"/>
+                    </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubGap">
+                        <rect key="frame" x="20" y="211" width="40" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Sub" id="sub-gap-label-cell"/>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubGapH">
+                        <rect key="frame" x="64" y="211" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="H:" id="sub-gap-h-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subGapH">
+                        <rect key="frame" x="88" y="209" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="sub-gap-h-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subGapHStep">
+                        <rect key="frame" x="140" y="209" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="sub-gap-h-step-cell"/>
+                    </stepper>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelSubGapV">
+                        <rect key="frame" x="170" y="211" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="V:" id="sub-gap-v-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subGapV">
+                        <rect key="frame" x="194" y="209" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="sub-gap-v-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="subGapVStep">
+                        <rect key="frame" x="246" y="209" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="sub-gap-v-step-cell"/>
+                    </stepper>
+                    <!-- Separator before Grid Offset -->
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="sep5">
+                        <rect key="frame" x="20" y="200" width="360" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    </box>
+                    <!-- Grid Offset row -->
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelGridOffset">
+                        <rect key="frame" x="20" y="172" width="96" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="Grid Offset:" id="offset-label-cell">
+                            <font key="font" metaFont="systemBold"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelOffsetH">
+                        <rect key="frame" x="120" y="172" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="H:" id="offset-h-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="offsetH">
+                        <rect key="frame" x="144" y="170" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="offset-h-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="offsetHStep">
+                        <rect key="frame" x="196" y="170" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="offset-h-step-cell"/>
+                    </stepper>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelOffsetV">
+                        <rect key="frame" x="224" y="172" width="20" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" title="V:" id="offset-v-label-cell"/>
+                    </textField>
+                    <textField horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="offsetV">
+                        <rect key="frame" x="248" y="170" width="50" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="offset-v-cell">
+                            <font key="font" metaFont="system"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="offsetVStep">
+                        <rect key="frame" x="300" y="170" width="19" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <stepperCell key="cell" continuous="YES" id="offset-v-step-cell"/>
+                    </stepper>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="offsetSyncHV">
+                        <rect key="frame" x="326" y="171" width="54" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Sync H/V" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="offset-sync-cell"/>
+                        <connections>
+                            <action selector="offsetChanged:" target="-2" id="offset-sync-action"/>
+                        </connections>
+                    </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="labelMainColor">
                         <rect key="frame" x="20" y="128" width="72" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
@@ -264,9 +446,14 @@
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="snapCheck">
-                        <rect key="frame" x="20" y="84" width="200" height="18"/>
+                        <rect key="frame" x="20" y="84" width="180" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Enable snap" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3jb-sY-HvZ"/>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="followItalic">
+                        <rect key="frame" x="204" y="84" width="176" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Follow italic angle" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="follow-italic-cell"/>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="resetButton">
                         <rect key="frame" x="20" y="16" width="88" height="24"/>
