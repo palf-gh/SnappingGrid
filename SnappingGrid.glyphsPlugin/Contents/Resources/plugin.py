@@ -12,6 +12,7 @@ from AppKit import (
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
 	NSAttributedString, NSFont, NSForegroundColorAttributeName, NSFontAttributeName,
+	NSEvent,
 )
 from Foundation import NSObject, NSSelectorFromString
 
@@ -50,6 +51,24 @@ class SettingsPanelController(NSObject):
 	_radioHorizontal = objc.IBOutlet()
 	_radioVertical   = objc.IBOutlet()
 	_resetButton     = objc.IBOutlet()
+	_labelGridGap    = objc.IBOutlet()
+	_gapEnable       = objc.IBOutlet()
+	_gapSyncMainSub  = objc.IBOutlet()
+	_labelMainGap    = objc.IBOutlet()
+	_captionMainGapH = objc.IBOutlet()
+	_captionMainGapV = objc.IBOutlet()
+	_mainGapH        = objc.IBOutlet()
+	_mainGapV        = objc.IBOutlet()
+	_mainGapHStep    = objc.IBOutlet()
+	_mainGapVStep    = objc.IBOutlet()
+	_gapSyncHV       = objc.IBOutlet()
+	_labelSubGap     = objc.IBOutlet()
+	_captionSubGapH  = objc.IBOutlet()
+	_captionSubGapV  = objc.IBOutlet()
+	_subGapH         = objc.IBOutlet()
+	_subGapV         = objc.IBOutlet()
+	_subGapHStep     = objc.IBOutlet()
+	_subGapVStep     = objc.IBOutlet()
 
 	def initWithPlugin_(self, plugin):
 		self = objc.super(SettingsPanelController, self).init()
@@ -63,6 +82,7 @@ class SettingsPanelController(NSObject):
 	def show(self):
 		if self.panel is None:
 			self._loadNib()
+		self.plugin._clearPreview()
 		self._loadToUI()
 		self.panel.makeKeyAndOrderFront_(None)
 
@@ -98,17 +118,29 @@ class SettingsPanelController(NSObject):
 			step.setValueWraps_(False)
 			step.setTarget_(self)
 			step.setAction_(step_action)
-		for field in (self._mainH, self._mainV, self._subH, self._subV):
+		for step in (self._mainGapHStep, self._mainGapVStep, self._subGapHStep, self._subGapVStep):
+			step.setMinValue_(0)
+			step.setMaxValue_(999)
+			step.setIncrement_(1)
+			step.setValueWraps_(False)
+			step.setTarget_(self)
+			step.setAction_(step_action)
+		for field in (self._mainH, self._mainV, self._subH, self._subV,
+		              self._mainGapH, self._mainGapV, self._subGapH, self._subGapV):
 			field.setEditable_(True)
 			field.setSelectable_(True)
 			field.setBezeled_(True)
 			field.setDrawsBackground_(True)
 			field.setDelegate_(self)
 		self._stepperPairs = (
-			(self._mainHStep, self._mainH),
-			(self._mainVStep, self._mainV),
-			(self._subHStep, self._subH),
-			(self._subVStep, self._subV),
+			(self._mainHStep, self._mainH, 1, 'mainGrid'),
+			(self._mainVStep, self._mainV, 1, 'mainGrid'),
+			(self._subHStep, self._subH, 1, 'subGrid'),
+			(self._subVStep, self._subV, 1, 'subGrid'),
+			(self._mainGapHStep, self._mainGapH, 0, 'mainGap'),
+			(self._mainGapVStep, self._mainGapV, 0, 'mainGap'),
+			(self._subGapHStep, self._subGapH, 0, 'subGap'),
+			(self._subGapVStep, self._subGapV, 0, 'subGap'),
 		)
 		mode_sel = NSSelectorFromString('modeChanged:')
 		self._radioDivision.setTarget_(self)
@@ -133,6 +165,18 @@ class SettingsPanelController(NSObject):
 		reset_sel = NSSelectorFromString('resetToDefaults:')
 		self._resetButton.setTarget_(self)
 		self._resetButton.setAction_(reset_sel)
+		gap_sel = NSSelectorFromString('gapChanged:')
+		for button in (self._gapEnable, self._gapSyncMainSub, self._gapSyncHV):
+			button.setTarget_(self)
+			button.setAction_(gap_sel)
+		preview_sel = NSSelectorFromString('previewChanged:')
+		self._snapCheck.setTarget_(self)
+		self._snapCheck.setAction_(preview_sel)
+		colour_sel = NSSelectorFromString('colourChanged:')
+		for well in (self._mainColorWell, self._subColorWell):
+			well.setContinuous_(True)
+			well.setTarget_(self)
+			well.setAction_(colour_sel)
 
 	def _applyLocalisation(self):
 		lx = Glyphs.localize
@@ -180,6 +224,17 @@ class SettingsPanelController(NSObject):
 		}))
 		self._radioHorizontal.setTitle_(lx({'en': 'Horizontal', 'ja': '水平', 'zh': '水平', 'ko': '수평'}))
 		self._radioVertical.setTitle_(lx({'en': 'Vertical', 'ja': '垂直', 'zh': '垂直', 'ko': '수직'}))
+		self._labelGridGap.setStringValue_(lx({
+			'en': 'Grid Gap:',
+			'ja': 'グリッド間隔:',
+			'zh': '网格间隔:',
+			'ko': '그리드 간격:',
+		}))
+		self._gapEnable.setTitle_(lx({'en': 'Enable', 'ja': '有効にする', 'zh': '启用', 'ko': '활성화'}))
+		self._gapSyncMainSub.setTitle_(lx({'en': 'Link Main/Sub', 'ja': 'メイン/サブ連動', 'zh': '关联主/子', 'ko': '메인/서브 연동'}))
+		self._labelMainGap.setStringValue_(lx({'en': 'Main', 'ja': 'メイン', 'zh': '主', 'ko': '메인'}))
+		self._labelSubGap.setStringValue_(lx({'en': 'Sub', 'ja': 'サブ', 'zh': '子', 'ko': '서브'}))
+		self._gapSyncHV.setTitle_(lx({'en': 'Sync H/V', 'ja': '縦横同期', 'zh': '同步H/V', 'ko': 'H/V 동기화'}))
 		self._resetButton.setTitle_(lx({'en': 'Reset', 'ja': 'リセット', 'zh': '重置', 'ko': '초기화'}))
 		self._applyReadableColours()
 
@@ -188,7 +243,10 @@ class SettingsPanelController(NSObject):
 		"""Glyphs の外観下でラベル色が誤解釈されることがあるため、明示的にコントラストを確保する。"""
 		label_colour = NSColor.labelColor()
 		control_colour = NSColor.controlTextColor()
-		editable = {self._mainH, self._mainV, self._subH, self._subV}
+		editable = {
+			self._mainH, self._mainV, self._subH, self._subV,
+			self._mainGapH, self._mainGapV, self._subGapH, self._subGapV,
+		}
 
 		def visit(view):
 			if view is None:
@@ -204,7 +262,8 @@ class SettingsPanelController(NSObject):
 		visit(self.panel.contentView())
 
 		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck,
-		            self._radioSquare, self._radioTriangle, self._radioHorizontal, self._radioVertical):
+		            self._radioSquare, self._radioTriangle, self._radioHorizontal, self._radioVertical,
+		            self._gapEnable, self._gapSyncMainSub, self._gapSyncHV):
 			self._setButtonTitleColour_(btn, label_colour)
 		for btn in (self._cancelButton, self._okButton):
 			self._setButtonTitleColour_(btn, control_colour)
@@ -246,6 +305,10 @@ class SettingsPanelController(NSObject):
 		self._subHStep.setIntValue_(int(s.get('subDivX', 2)))
 		self._subVStep.setIntValue_(int(s.get('subDivY', 2)))
 		self._subSync.setState_(1 if s.get('subSync', False) else 0)
+		self._gapEnable.setState_(1 if s.get('gapEnabled', False) else 0)
+		self._gapSyncMainSub.setState_(1 if s.get('gapSyncMainSub', False) else 0)
+		self._gapSyncHV.setState_(1 if s.get('gapSyncHV', False) else 0)
+		self._setGapFieldValues(s)
 
 		mc = s.get('mainColor', [0.2, 0.5, 1.0, 0.4])
 		sc = s.get('subColor',  [0.2, 0.5, 1.0, 0.15])
@@ -273,8 +336,10 @@ class SettingsPanelController(NSObject):
 			self._propagateMainHToV()
 		if self._subSync.state() == 1:
 			self._propagateSubHToV()
+		self._normaliseGapLinks()
 		self._updateSyncFieldAvailability()
 		self._updateSubGridCaptionForMode()
+		self._updateGapAvailability()
 
 	@objc.python_method
 	def _applyMainGridFieldsFromSettings(self, s):
@@ -306,6 +371,30 @@ class SettingsPanelController(NSObject):
 			}))
 
 	@objc.python_method
+	def _formatUnitValue(self, value):
+		try:
+			f = float(value)
+		except (TypeError, ValueError):
+			f = 0.0
+		if abs(f - int(f)) < 1e-6:
+			return str(int(f))
+		return ('%.3f' % f).rstrip('0').rstrip('.')
+
+	@objc.python_method
+	def _setGapFieldValues(self, s):
+		values = self.plugin._normalisedGapValues(s, include_disabled=True)
+		pairs = (
+			(self._mainGapH, self._mainGapHStep, values[0]),
+			(self._mainGapV, self._mainGapVStep, values[1]),
+			(self._subGapH, self._subGapHStep, values[2]),
+			(self._subGapV, self._subGapVStep, values[3]),
+		)
+		for field, stepper, value in pairs:
+			text = self._formatUnitValue(value)
+			field.setStringValue_(text)
+			stepper.setFloatValue_(float(value))
+
+	@objc.python_method
 	def _updateSyncFieldAvailability(self):
 		main_on = self._mainSync.state() == 1
 		for ctl in (self._mainV, self._mainVStep):
@@ -320,16 +409,68 @@ class SettingsPanelController(NSObject):
 		if self._captionSubV is not None:
 			self._captionSubV.setEnabled_(not sub_on)
 
-	def _saveFromUI(self):
+	@objc.python_method
+	def _updateGapAvailability(self):
+		is_tri = self._radioTriangle.state() == 1
+		gap_on = self._gapEnable.state() == 1
+		main_sub_on = self._gapSyncMainSub.state() == 1
+		hv_on = self._gapSyncHV.state() == 1
+		for ctl in (self._labelGridGap, self._gapEnable):
+			if ctl is not None:
+				ctl.setEnabled_(True)
+		for ctl in (self._gapSyncMainSub, self._labelMainGap, self._captionMainGapH,
+		            self._mainGapH, self._mainGapHStep):
+			if ctl is not None:
+				ctl.setEnabled_(gap_on)
+		# Sync H/V and V fields: not applicable for triangle (V is unused)
+		for ctl in (self._gapSyncHV,):
+			if ctl is not None:
+				ctl.setEnabled_(gap_on and not is_tri)
+		for ctl in (self._captionMainGapV, self._mainGapV, self._mainGapVStep):
+			if ctl is not None:
+				ctl.setEnabled_(gap_on and not hv_on and not is_tri)
+		for ctl in (self._labelSubGap, self._captionSubGapH, self._subGapH, self._subGapHStep):
+			if ctl is not None:
+				ctl.setEnabled_(gap_on and not main_sub_on)
+		for ctl in (self._captionSubGapV, self._subGapV, self._subGapVStep):
+			if ctl is not None:
+				ctl.setEnabled_(gap_on and not main_sub_on and not hv_on and not is_tri)
+
+	@objc.python_method
+	def _fieldInt(self, field, fallback=1, minimum=1):
+		try:
+			return max(minimum, int(float(field.stringValue() or str(fallback))))
+		except (TypeError, ValueError):
+			return max(minimum, int(fallback))
+
+	@objc.python_method
+	def _fieldFloat(self, field, fallback=0.0, minimum=0.0):
+		try:
+			return max(minimum, float(field.stringValue() or str(fallback)))
+		except (TypeError, ValueError):
+			return max(minimum, float(fallback))
+
+	@objc.python_method
+	def _collectSettings(self):
 		mode = 'division' if self._radioDivision.state() == 1 else 'unit'
-		hVal = max(1, int(float(self._mainH.stringValue() or '1')))
-		vVal = max(1, int(float(self._mainV.stringValue() or '1')))
+		hVal = self._fieldInt(self._mainH, 1, 1)
+		vVal = self._fieldInt(self._mainV, 1, 1)
 		if self._mainSync.state() == 1:
 			vVal = hVal
-		sx = max(1, int(float(self._subH.stringValue() or '1')))
-		sy = max(1, int(float(self._subV.stringValue() or '1')))
+		sx = self._fieldInt(self._subH, 1, 1)
+		sy = self._fieldInt(self._subV, 1, 1)
 		if self._subSync.state() == 1:
 			sy = sx
+		mainGapX = self._fieldFloat(self._mainGapH, 0.0, 0.0)
+		mainGapY = self._fieldFloat(self._mainGapV, 0.0, 0.0)
+		subGapX = self._fieldFloat(self._subGapH, 0.0, 0.0)
+		subGapY = self._fieldFloat(self._subGapV, 0.0, 0.0)
+		if self._gapSyncHV.state() == 1:
+			mainGapY = mainGapX
+			subGapY = subGapX
+		if self._gapSyncMainSub.state() == 1:
+			subGapX = mainGapX
+			subGapY = mainGapY
 
 		mc_ns = self._mainColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
 		sc_ns = self._subColorWell.color().colorUsingColorSpaceName_('NSCalibratedRGBColorSpace')
@@ -352,8 +493,18 @@ class SettingsPanelController(NSObject):
 			'snapEnabled':    self._snapCheck.state() == 1,
 			'gridShape':      'triangle' if self._radioTriangle.state() == 1 else 'square',
 			'triOrientation': 'vertical' if self._radioVertical.state() == 1 else 'horizontal',
+			'gapEnabled':     self._gapEnable.state() == 1,
+			'mainGapX':       mainGapX,
+			'mainGapY':       mainGapY,
+			'subGapX':        subGapX,
+			'subGapY':        subGapY,
+			'gapSyncHV':      self._gapSyncHV.state() == 1,
+			'gapSyncMainSub': self._gapSyncMainSub.state() == 1,
 		}
-		self.plugin._saveSettings(Glyphs.font, s)
+		return s
+
+	def _saveFromUI(self):
+		self.plugin._saveSettings(Glyphs.font, self._collectSettings())
 
 	def modeChanged_(self, sender):
 		# NSButton radio は兄弟間で自動排他されないことがある。sender を基準に明示的に片方だけ ON にする。
@@ -378,6 +529,7 @@ class SettingsPanelController(NSObject):
 		if self._subSync.state() == 1:
 			self._propagateSubHToV()
 		self._updateSyncFieldAvailability()
+		self._pushPreview()
 
 	def syncToggled_(self, sender):
 		if sender is self._mainSync and self._mainSync.state() == 1:
@@ -385,6 +537,7 @@ class SettingsPanelController(NSObject):
 		elif sender is self._subSync and self._subSync.state() == 1:
 			self._propagateSubHToV()
 		self._updateSyncFieldAvailability()
+		self._pushPreview()
 
 	def shapeChanged_(self, sender):
 		if sender is self._radioTriangle:
@@ -394,6 +547,8 @@ class SettingsPanelController(NSObject):
 			self._radioSquare.setState_(1)
 			self._radioTriangle.setState_(0)
 		self._updateOrientationAvailability()
+		self._updateGapAvailability()
+		self._pushPreview()
 
 	def orientationChanged_(self, sender):
 		if sender is self._radioVertical:
@@ -402,9 +557,22 @@ class SettingsPanelController(NSObject):
 		else:
 			self._radioHorizontal.setState_(1)
 			self._radioVertical.setState_(0)
+		self._pushPreview()
 
 	def resetToDefaults_(self, sender):
 		self._loadFromDict(self.plugin._defaultSettings())
+		self._pushPreview()
+
+	def previewChanged_(self, sender):
+		self._pushPreview()
+
+	def colourChanged_(self, sender):
+		self._pushPreview()
+
+	def gapChanged_(self, sender):
+		self._normaliseGapLinks()
+		self._updateGapAvailability()
+		self._pushPreview()
 
 	@objc.python_method
 	def _updateOrientationAvailability(self):
@@ -423,33 +591,53 @@ class SettingsPanelController(NSObject):
 		self._subV.setStringValue_(self._subH.stringValue())
 		self._syncStepperFromField(self._subV, self._subVStep)
 
+	@objc.python_method
+	def _normaliseGapLinks(self):
+		if self._gapSyncHV.state() == 1:
+			self._mainGapV.setStringValue_(self._mainGapH.stringValue())
+			self._syncStepperFromField(self._mainGapV, self._mainGapVStep, 0)
+			self._subGapV.setStringValue_(self._subGapH.stringValue())
+			self._syncStepperFromField(self._subGapV, self._subGapVStep, 0)
+		if self._gapSyncMainSub.state() == 1:
+			self._subGapH.setStringValue_(self._mainGapH.stringValue())
+			self._subGapV.setStringValue_(self._mainGapV.stringValue())
+			self._syncStepperFromField(self._subGapH, self._subGapHStep, 0)
+			self._syncStepperFromField(self._subGapV, self._subGapVStep, 0)
+
 	def stepperChanged_(self, sender):
 		if self._isUpdatingControls:
 			return
 		field = None
-		for step, f in self._stepperPairs:
+		minimum = 1
+		kind = None
+		for step, f, mn, k in self._stepperPairs:
 			if sender is step:
 				field = f
+				minimum = mn
+				kind = k
 				break
 		if field:
 			self._isUpdatingControls = True
 			try:
-				val = int(sender.intValue())
+				val = max(minimum, int(sender.intValue()))
 				field.setStringValue_(str(val))
 				# Sync paired field if needed
-				isMain = (sender is self._mainHStep or sender is self._mainVStep)
-				if isMain and self._mainSync.state() == 1:
+				if kind == 'mainGrid' and self._mainSync.state() == 1:
 					self._mainH.setStringValue_(str(val))
 					self._mainV.setStringValue_(str(val))
 					self._mainHStep.setIntValue_(val)
 					self._mainVStep.setIntValue_(val)
-				elif not isMain and self._subSync.state() == 1:
+				elif kind == 'subGrid' and self._subSync.state() == 1:
 					self._subH.setStringValue_(str(val))
 					self._subV.setStringValue_(str(val))
 					self._subHStep.setIntValue_(val)
 					self._subVStep.setIntValue_(val)
 			finally:
 				self._isUpdatingControls = False
+			if kind in ('mainGap', 'subGap'):
+				self._normaliseGapLinks()
+				self._updateGapAvailability()
+			self._pushPreview()
 
 	def controlTextDidEndEditing_(self, notification):
 		obj = notification.object()
@@ -469,13 +657,34 @@ class SettingsPanelController(NSObject):
 			self._syncStepperFromField(self._subV, self._subVStep)
 			if self._subSync.state() == 1:
 				self._propagateSubHToV()
+		elif obj is self._mainGapH:
+			self._syncStepperFromField(self._mainGapH, self._mainGapHStep, 0)
+			self._normaliseGapLinks()
+		elif obj is self._mainGapV:
+			self._syncStepperFromField(self._mainGapV, self._mainGapVStep, 0)
+			self._normaliseGapLinks()
+		elif obj is self._subGapH:
+			self._syncStepperFromField(self._subGapH, self._subGapHStep, 0)
+			self._normaliseGapLinks()
+		elif obj is self._subGapV:
+			self._syncStepperFromField(self._subGapV, self._subGapVStep, 0)
+			self._normaliseGapLinks()
+		self._pushPreview()
+
+	def controlTextDidChange_(self, notification):
+		if self._isUpdatingControls:
+			return
+		obj = notification.object()
+		if obj in (self._mainGapH, self._mainGapV, self._subGapH, self._subGapV):
+			self._normaliseGapLinks()
+		self._pushPreview()
 
 	@objc.python_method
-	def _syncStepperFromField(self, field, stepper):
+	def _syncStepperFromField(self, field, stepper, minimum=1):
 		try:
-			val = max(1, min(999, int(float(field.stringValue() or '1'))))
+			val = max(minimum, min(999, int(float(field.stringValue() or str(minimum)))))
 		except (TypeError, ValueError):
-			val = 1
+			val = minimum
 		self._isUpdatingControls = True
 		try:
 			field.setStringValue_(str(val))
@@ -483,14 +692,29 @@ class SettingsPanelController(NSObject):
 		finally:
 			self._isUpdatingControls = False
 
+	@objc.python_method
+	def _pushPreview(self):
+		try:
+			self.plugin._previewSettings = self._collectSettings()
+			Glyphs.redraw()
+		except Exception:
+			print(traceback.format_exc())
+
 	def ok_(self, sender):
 		self._saveFromUI()
+		self.plugin._clearPreview()
 		self.panel.orderOut_(None)
 		self.plugin._loadPrefs()
 		Glyphs.redraw()
 
 	def cancel_(self, sender):
+		self.plugin._clearPreview()
 		self.panel.orderOut_(None)
+		Glyphs.redraw()
+
+	def windowWillClose_(self, notification):
+		self.plugin._clearPreview()
+		Glyphs.redraw()
 
 
 # ─────────────────────────────────────────────
@@ -511,6 +735,7 @@ class SnappingGrid(GeneralPlugin):
 	@objc.python_method
 	def start(self):
 		self._loadPrefs()
+		self._previewSettings = None
 		self._settingsController = SettingsPanelController.alloc().initWithPlugin_(self)
 
 		showLabel = Glyphs.localize({
@@ -553,6 +778,8 @@ class SnappingGrid(GeneralPlugin):
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEDRAGGED)
 		Glyphs.addCallback(self._snapDuringDrag_, MOUSEUP)
 
+		self._installArrowKeyMonitor()
+
 	def _toggleGrid_(self, sender):
 		self.gridVisible = not self.gridVisible
 		self._showItem.setState_(1 if self.gridVisible else 0)
@@ -561,6 +788,18 @@ class SnappingGrid(GeneralPlugin):
 
 	def _showSettings_(self, sender):
 		self._settingsController.show()
+
+	@objc.python_method
+	def _clearPreview(self):
+		self._previewSettings = None
+
+	@objc.python_method
+	def _effectiveSettings(self, font):
+		if getattr(self, '_previewSettings', None) is not None:
+			s = self._getSettings(font)
+			s.update(self._previewSettings)
+			return s
+		return self._getSettings(font)
 
 	def _snapDuringDrag_(self, notification):
 		if not self.gridVisible:
@@ -598,6 +837,7 @@ class SnappingGrid(GeneralPlugin):
 			angle_deg = self._effectiveItalicAngleDegrees(layer)
 			tan_shear = math.tan(math.radians(angle_deg))
 			shape = s['gridShape']
+			mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 
 			for node in selectedNodes:
 				pos = node.position
@@ -610,7 +850,11 @@ class SnappingGrid(GeneralPlugin):
 
 				if shape == 'triangle':
 					orient = s['triOrientation']
-					if orient == 'horizontal':
+					_, _, subGapX, _ = self._normalisedGapValues(s)
+					if subGapX > 0.0:
+						families = self._triFamilies(orient, stepX, stepY, ySnapOrigin)
+						su, sv = self._snapTriangleWithGap(pu, pv, families, subGapX)
+					elif orient == 'horizontal':
 						# Lattice: P(m,n) = (m*stepX + n*stepX/2, n*stepY + ySnapOrigin)
 						n_snap = round((pv - ySnapOrigin) / stepY)
 						m_snap = round((pu - n_snap * stepX * 0.5) / stepX)
@@ -626,8 +870,8 @@ class SnappingGrid(GeneralPlugin):
 					snappedY = sv
 				else:
 					# Square grid: snap u and y independently
-					snappedY = round((pv - ySnapOrigin) / stepY) * stepY + ySnapOrigin
-					u_snapped = round(pu / stepX) * stepX
+					snappedY = self._nearestGridCoord(pv, ySnapOrigin, mainY, mainGapY, stepY, subGapY)
+					u_snapped = self._nearestGridCoord(pu, 0.0, mainX, mainGapX, stepX, subGapX)
 					snappedX = u_snapped + tan_shear * (snappedY - pivot)
 
 				dx = snappedX - pos.x
@@ -659,6 +903,111 @@ class SnappingGrid(GeneralPlugin):
 			print(traceback.format_exc())
 
 	@objc.python_method
+	def _installArrowKeyMonitor(self):
+		"""グリッド表示中、矢印キーをサブグリッド単位、Shift+矢印キーをメイングリッド単位の移動に差し替える。"""
+		NSEventMaskKeyDown = 1 << 10
+
+		def handler(event):
+			try:
+				return self._handleArrowKeyEvent(event)
+			except Exception:
+				print(traceback.format_exc())
+				return event
+
+		self._arrowKeyMonitor = NSEvent.addLocalMonitorForEventsMatchingMask_handler_(
+			NSEventMaskKeyDown, handler
+		)
+
+	@objc.python_method
+	def _handleArrowKeyEvent(self, event):
+		if not self.gridVisible:
+			return event
+
+		keyCode = event.keyCode()
+		# 123=Left, 124=Right, 125=Down, 126=Up
+		if keyCode not in (123, 124, 125, 126):
+			return event
+
+		SHIFT, CONTROL, OPTION, COMMAND = 1 << 17, 1 << 18, 1 << 19, 1 << 20
+		flags = event.modifierFlags() & 0xFFFF0000
+		# Shift 単独以外の修飾キー（Cmd/Option/Control）は Glyphs の既定動作に委ねる
+		if flags & (CONTROL | OPTION | COMMAND):
+			return event
+
+		window = NSApplication.sharedApplication().keyWindow()
+		if window is None:
+			return event
+		# 設定パネルがキーウィンドウのときは横取りしない
+		sc = getattr(self, '_settingsController', None)
+		if sc is not None:
+			panel = getattr(sc, 'panel', None)
+			if panel is not None and window is panel:
+				return event
+		# テキスト編集中（フィールドエディタ）は横取りしない
+		responder = window.firstResponder()
+		if responder is not None and responder.className() == 'NSTextView':
+			return event
+
+		font = Glyphs.font
+		if not font:
+			return event
+		layers = font.selectedLayers
+		if not layers:
+			return event
+		layer = layers[0]
+
+		selectedNodes = [n for n in layer.selection
+		                 if hasattr(n, 'position') and hasattr(n, 'type')]
+		if not selectedNodes:
+			return event
+
+		s = self._getSettings(font)
+		mainX, mainY = self._mainIntervals(layer, s)
+		if mainX <= 0 or mainY <= 0:
+			return event
+
+		if flags & SHIFT:
+			stepX, stepY = mainX, mainY
+		else:
+			stepX, stepY = self._subIntervals(s, mainX, mainY)
+			if stepX <= 0 or stepY <= 0:
+				stepX, stepY = mainX, mainY
+		# ギャップは線の中心を分離するだけなので、矢印移動量は従来の間隔を維持する。
+
+		dx, dy = 0.0, 0.0
+		if keyCode == 123:
+			dx = -stepX
+		elif keyCode == 124:
+			dx = stepX
+		elif keyCode == 125:
+			dy = -stepY
+		elif keyCode == 126:
+			dy = stepY
+
+		selectedSet = set(selectedNodes)
+		moves = {id(n): (n, dx, dy) for n in selectedNodes}
+		# オンカーブノードに付随するオフカーブハンドルも一緒に動かす
+		for nid, (node, ddx, ddy) in list(moves.items()):
+			if node.type == OFFCURVE:
+				continue
+			for neighbor in (node.prevNode, node.nextNode):
+				if neighbor is None:
+					continue
+				if neighbor.type != OFFCURVE:
+					continue
+				if neighbor in selectedSet:
+					continue
+				if id(neighbor) in moves:
+					continue
+				moves[id(neighbor)] = (neighbor, ddx, ddy)
+
+		for node, ddx, ddy in moves.values():
+			p = node.position
+			node.position = NSPoint(p.x + ddx, p.y + ddy)
+
+		return None
+
+	@objc.python_method
 	def _drawGrid_(self, layer, info):
 		if not self.gridVisible:
 			return
@@ -670,7 +1019,7 @@ class SnappingGrid(GeneralPlugin):
 			scale = info.get('Scale', 1.0) if isinstance(info, dict) else 1.0
 			lineWidth = 1.0 / scale
 
-			s = self._getSettings(Glyphs.font)
+			s = self._effectiveSettings(Glyphs.font)
 			mainX, mainY = self._mainIntervals(layer, s)
 			subX, subY = self._subIntervals(s, mainX, mainY)
 			grid_mode = s['mode']
@@ -680,30 +1029,42 @@ class SnappingGrid(GeneralPlugin):
 			if shape == 'triangle':
 				orient = s['triOrientation']
 				y_origin = 0.0 if grid_mode == 'unit' else yBottom
+				mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 				if subX > 0 and subY > 0:
-					self._strokeTriGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), orient, y_origin, layer, pivot_y)
+					self._strokeTriGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), orient, y_origin, layer, pivot_y, subGapX)
 				if mainX > 0 and mainY > 0:
-					self._strokeTriGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), orient, y_origin, layer, pivot_y)
+					self._strokeTriGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), orient, y_origin, layer, pivot_y, mainGapX)
 			else:
+				mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 				if subX > 0 and subY > 0:
-					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), grid_mode, layer, pivot_y)
+					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), grid_mode, layer, pivot_y, subGapX, subGapY)
 				if mainX > 0 and mainY > 0:
-					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), grid_mode, layer, pivot_y)
+					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), grid_mode, layer, pivot_y, mainGapX, mainGapY)
 		except Exception:
 			print(traceback.format_exc())
 
 	@objc.python_method
-	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer, pivot_y):
+	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer, pivot_y, gapX=0.0, gapY=0.0):
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
+		gapX = max(0.0, float(gapX or 0.0))
+		gapY = max(0.0, float(gapY or 0.0))
+
+		def offsetsForGap(gap):
+			if gap <= 0:
+				return (0.0,)
+			half = gap * 0.5
+			return (-half, half)
 
 		# Draw in glyph coordinate space (straight vertical / horizontal lines).
 		# Vertical lines
 		u = stepX
 		while u < width:
-			path.moveToPoint_(NSPoint(u, yBottom))
-			path.lineToPoint_(NSPoint(u, yTop))
+			for offset in offsetsForGap(gapX):
+				x = u + offset
+				path.moveToPoint_(NSPoint(x, yBottom))
+				path.lineToPoint_(NSPoint(x, yTop))
 			u += stepX
 
 		# Horizontal lines
@@ -712,8 +1073,10 @@ class SnappingGrid(GeneralPlugin):
 			n = int(math.ceil((yBottom - y_origin) / stepY))
 			y = y_origin + n * stepY
 			while y <= yTop:
-				path.moveToPoint_(NSPoint(0.0,   y))
-				path.lineToPoint_(NSPoint(width, y))
+				for offset in offsetsForGap(gapY):
+					yy = y + offset
+					path.moveToPoint_(NSPoint(0.0,   yy))
+					path.lineToPoint_(NSPoint(width, yy))
 				y += stepY
 
 		# Apply italic shear via Glyphs API (same pivot used by Glyphs itself).
@@ -724,19 +1087,43 @@ class SnappingGrid(GeneralPlugin):
 		path.stroke()
 
 	@objc.python_method
-	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, layer, pivot_y):
-		if orientation == 'vertical':
-			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
-		else:
-			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y)
+	def _addGapLine(self, path, x0, y0, x1, y1, gap):
+		"""Add one line (gap<=0) or two parallel lines offset ±gap/2 along the normal (gap>0)."""
+		if gap <= 0.0:
+			path.moveToPoint_(NSPoint(x0, y0))
+			path.lineToPoint_(NSPoint(x1, y1))
+			return
+		dx = x1 - x0
+		dy = y1 - y0
+		L = math.sqrt(dx * dx + dy * dy)
+		if L < 1e-12:
+			path.moveToPoint_(NSPoint(x0, y0))
+			path.lineToPoint_(NSPoint(x1, y1))
+			return
+		nx = -dy / L
+		ny =  dx / L
+		half = gap * 0.5
+		for sign in (-1.0, 1.0):
+			ox = sign * half * nx
+			oy = sign * half * ny
+			path.moveToPoint_(NSPoint(x0 + ox, y0 + oy))
+			path.lineToPoint_(NSPoint(x1 + ox, y1 + oy))
 
 	@objc.python_method
-	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, layer, pivot_y, gap=0.0):
+		if orientation == 'vertical':
+			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap)
+		else:
+			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap)
+
+	@objc.python_method
+	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap=0.0):
 		"""Horizontal tri-grid: horizontal lines + ±diagonal lines (slope = 2*stepY/stepX)."""
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
 		slope = 2.0 * stepY / stepX
+		gap = max(0.0, float(gap or 0.0))
 
 		# Horizontal lines, anchored at y_origin
 		n_start = int(math.floor((yBottom - y_origin) / stepY))
@@ -744,8 +1131,7 @@ class SnappingGrid(GeneralPlugin):
 		for n in range(n_start, n_end + 1):
 			y = y_origin + n * stepY
 			if yBottom <= y <= yTop:
-				path.moveToPoint_(NSPoint(0.0, y))
-				path.lineToPoint_(NSPoint(width, y))
+				self._addGapLine(path, 0.0, y, width, y, gap)
 
 		# Diagonal lines pass through (m*stepX, y_origin).
 		# "/" : y - y_origin = slope*(x - m*stepX)  →  x = (y-y_origin)/slope + m*stepX
@@ -759,14 +1145,12 @@ class SnappingGrid(GeneralPlugin):
 			x0 = (yBottom - y_origin) / slope + m * stepX
 			x1 = (yTop - y_origin) / slope + m * stepX
 			if not (x1 < 0 or x0 > width):
-				path.moveToPoint_(NSPoint(x0, yBottom))
-				path.lineToPoint_(NSPoint(x1, yTop))
+				self._addGapLine(path, x0, yBottom, x1, yTop, gap)
 			# "\"
 			x0b = m * stepX - (yBottom - y_origin) / slope
 			x1b = m * stepX - (yTop - y_origin) / slope
 			if not (x1b > width or x0b < 0):
-				path.moveToPoint_(NSPoint(x0b, yBottom))
-				path.lineToPoint_(NSPoint(x1b, yTop))
+				self._addGapLine(path, x0b, yBottom, x1b, yTop, gap)
 
 		angle_deg = self._effectiveItalicAngleDegrees(layer)
 		if abs(angle_deg) > 0.001:
@@ -774,18 +1158,18 @@ class SnappingGrid(GeneralPlugin):
 		path.stroke()
 
 	@objc.python_method
-	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y):
+	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap=0.0):
 		"""Vertical tri-grid: vertical lines + ±diagonal lines (slope = stepY/(2*stepX))."""
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
 		slope_v = stepY / (2.0 * stepX)
+		gap = max(0.0, float(gap or 0.0))
 
 		# Vertical lines
 		u = stepX
 		while u < width:
-			path.moveToPoint_(NSPoint(u, yBottom))
-			path.lineToPoint_(NSPoint(u, yTop))
+			self._addGapLine(path, u, yBottom, u, yTop, gap)
 			u += stepX
 
 		# Diagonal lines pass through (0, m*stepY + y_origin).
@@ -802,20 +1186,143 @@ class SnappingGrid(GeneralPlugin):
 			y_xW = slope_v * width + base_y
 			y_lo, y_hi = min(y_x0, y_xW), max(y_x0, y_xW)
 			if not (y_hi < yBottom or y_lo > yTop):
-				path.moveToPoint_(NSPoint(0.0, y_x0))
-				path.lineToPoint_(NSPoint(width, y_xW))
+				self._addGapLine(path, 0.0, y_x0, width, y_xW, gap)
 			# "\"
 			y_x0b = base_y
 			y_xWb = -slope_v * width + base_y
 			y_lo2, y_hi2 = min(y_x0b, y_xWb), max(y_x0b, y_xWb)
 			if not (y_hi2 < yBottom or y_lo2 > yTop):
-				path.moveToPoint_(NSPoint(0.0, y_x0b))
-				path.lineToPoint_(NSPoint(width, y_xWb))
+				self._addGapLine(path, 0.0, y_x0b, width, y_xWb, gap)
 
 		angle_deg = self._effectiveItalicAngleDegrees(layer)
 		if abs(angle_deg) > 0.001:
 			path.transformWithAngle_center_(angle_deg, pivot_y)
 		path.stroke()
+
+	@objc.python_method
+	def _floatSetting(self, s, key, default=0.0):
+		try:
+			return float(s.get(key, default))
+		except (TypeError, ValueError):
+			return float(default)
+
+	@objc.python_method
+	def _normalisedGapValues(self, s, include_disabled=False):
+		mainGapX = max(0.0, self._floatSetting(s, 'mainGapX', 0.0))
+		mainGapY = max(0.0, self._floatSetting(s, 'mainGapY', 0.0))
+		subGapX = max(0.0, self._floatSetting(s, 'subGapX', 0.0))
+		subGapY = max(0.0, self._floatSetting(s, 'subGapY', 0.0))
+		if s.get('gapSyncHV', False):
+			mainGapY = mainGapX
+			subGapY = subGapX
+		if s.get('gapSyncMainSub', False):
+			subGapX = mainGapX
+			subGapY = mainGapY
+		if include_disabled:
+			return mainGapX, mainGapY, subGapX, subGapY
+		if not s.get('gapEnabled', False):
+			return 0.0, 0.0, 0.0, 0.0
+		return mainGapX, mainGapY, subGapX, subGapY
+
+	@objc.python_method
+	def _gapOffsets(self, gap):
+		gap = max(0.0, float(gap or 0.0))
+		if gap <= 0.0:
+			return (0.0,)
+		half = gap * 0.5
+		return (-half, half)
+
+	@objc.python_method
+	def _nearestGridCoord(self, value, origin, mainStep, mainGap, subStep, subGap):
+		best = None
+		for step, gap in ((mainStep, mainGap), (subStep, subGap)):
+			if step <= 0:
+				continue
+			for offset in self._gapOffsets(gap):
+				k = round((value - origin - offset) / step)
+				candidate = origin + k * step + offset
+				distance = abs(candidate - value)
+				if best is None or distance < best[0]:
+					best = (distance, candidate)
+		return best[1] if best is not None else value
+
+	@objc.python_method
+	def _triFamilies(self, orient, stepX, stepY, O_y):
+		"""Return 3 line families as (ux, uy, spacing, phase) for a tri-grid.
+
+		Each family is defined by its unit normal (ux, uy) and the series
+		  t = phase + k * spacing  (k integer)
+		where t = ux*x + uy*y is the projection of a point onto the normal.
+		Gap-offset lines lie at t = phase + k*spacing ± gap/2.
+		"""
+		if orient == 'horizontal':
+			slope = 2.0 * stepY / stepX          # slope of diagonal lines
+			sq = math.sqrt(1.0 + slope * slope)
+			return [
+				# horizontal lines: normal (0,1), phase = O_y, spacing = stepY
+				(0.0,        1.0,       stepY,             O_y),
+				# "/" lines: using normal (slope, -1)/sq so t increases with m
+				(slope / sq, -1.0 / sq, slope * stepX / sq, -O_y / sq),
+				# "\" lines: normal (slope, 1)/sq, phase = O_y/sq
+				(slope / sq,  1.0 / sq, slope * stepX / sq,  O_y / sq),
+			]
+		else:  # vertical
+			slope_v = stepY / (2.0 * stepX)      # slope of diagonal lines
+			sq_v = math.sqrt(1.0 + slope_v * slope_v)
+			return [
+				# vertical lines: normal (1,0), phase = 0, spacing = stepX
+				(1.0,              0.0,        stepX,         0.0),
+				# "/" lines: normal (-slope_v, 1)/sq_v, phase = O_y/sq_v
+				(-slope_v / sq_v,  1.0 / sq_v, stepY / sq_v,  O_y / sq_v),
+				# "\" lines: normal (slope_v, 1)/sq_v, phase = O_y/sq_v
+				( slope_v / sq_v,  1.0 / sq_v, stepY / sq_v,  O_y / sq_v),
+			]
+
+	@objc.python_method
+	def _nearestLineValue(self, t, phase, spacing, gap):
+		"""Return the value (from the series phase+k*spacing ± gap/2) nearest to t."""
+		if spacing <= 0:
+			return t
+		k0 = round((t - phase) / spacing)
+		best = None
+		for dk in (-1, 0, 1):
+			base = phase + (k0 + dk) * spacing
+			offsets = (-gap * 0.5, gap * 0.5) if gap > 0.0 else (0.0,)
+			for off in offsets:
+				val = base + off
+				d = abs(val - t)
+				if best is None or d < best[0]:
+					best = (d, val)
+		return best[1] if best is not None else t
+
+	@objc.python_method
+	def _snapTriangleWithGap(self, pu, pv, families, gap):
+		"""Snap (pu,pv) to the nearest intersection of gap-offset triangle lines.
+
+		For each of the 3 families finds the nearest line (including ±gap/2 offset),
+		then tries all 3 pairs of families and returns the intersection closest to P.
+		"""
+		ws = []
+		for ux, uy, spacing, phase in families:
+			t = ux * pu + uy * pv
+			ws.append(self._nearestLineValue(t, phase, spacing, gap))
+
+		best = None
+		for i, j in ((0, 1), (0, 2), (1, 2)):
+			uxi, uyi = families[i][0], families[i][1]
+			uxj, uyj = families[j][0], families[j][1]
+			det = uxi * uyj - uyi * uxj
+			if abs(det) < 1e-12:
+				continue
+			x = (ws[i] * uyj - ws[j] * uyi) / det
+			y = (uxi * ws[j] - uxj * ws[i]) / det
+			d2 = (x - pu) ** 2 + (y - pv) ** 2
+			if best is None or d2 < best[0]:
+				best = (d2, x, y)
+
+		if best is None:
+			return pu, pv
+		return best[1], best[2]
 
 	@objc.python_method
 	def _ySnapOriginForLayer(self, layer, s):
@@ -969,6 +1476,13 @@ class SnappingGrid(GeneralPlugin):
 			'snapEnabled':    True,
 			'gridShape':      'square',
 			'triOrientation': 'horizontal',
+			'gapEnabled':     False,
+			'mainGapX':       0.0,
+			'mainGapY':       0.0,
+			'subGapX':        0.0,
+			'subGapY':        0.0,
+			'gapSyncHV':      False,
+			'gapSyncMainSub': False,
 		}
 
 	@objc.python_method
@@ -999,6 +1513,13 @@ class SnappingGrid(GeneralPlugin):
 			'snapEnabled':    bool(d.get(p + '.snapEnabled', True)),
 			'gridShape':      d.get(p + '.gridShape', 'square'),
 			'triOrientation': d.get(p + '.triOrientation', 'horizontal'),
+			'gapEnabled':     bool(d.get(p + '.gapEnabled', False)),
+			'mainGapX':       float(d.get(p + '.mainGapX', 0.0)),
+			'mainGapY':       float(d.get(p + '.mainGapY', 0.0)),
+			'subGapX':        float(d.get(p + '.subGapX', 0.0)),
+			'subGapY':        float(d.get(p + '.subGapY', 0.0)),
+			'gapSyncHV':      bool(d.get(p + '.gapSyncHV', False)),
+			'gapSyncMainSub': bool(d.get(p + '.gapSyncMainSub', False)),
 		}
 
 	@objc.python_method
@@ -1020,6 +1541,13 @@ class SnappingGrid(GeneralPlugin):
 		d[p + '.snapEnabled']    = s['snapEnabled']
 		d[p + '.gridShape']      = s['gridShape']
 		d[p + '.triOrientation'] = s['triOrientation']
+		d[p + '.gapEnabled']     = s.get('gapEnabled', False)
+		d[p + '.mainGapX']       = s.get('mainGapX', 0.0)
+		d[p + '.mainGapY']       = s.get('mainGapY', 0.0)
+		d[p + '.subGapX']        = s.get('subGapX', 0.0)
+		d[p + '.subGapY']        = s.get('subGapY', 0.0)
+		d[p + '.gapSyncHV']      = s.get('gapSyncHV', False)
+		d[p + '.gapSyncMainSub'] = s.get('gapSyncMainSub', False)
 
 	@objc.python_method
 	def _loadPrefs(self):
