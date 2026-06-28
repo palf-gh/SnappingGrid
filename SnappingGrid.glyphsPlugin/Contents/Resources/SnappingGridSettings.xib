@@ -66,6 +66,7 @@
                 <outlet property="_offsetV" destination="offsetV" id="out-offset-v"/>
                 <outlet property="_offsetVStep" destination="offsetVStep" id="out-offset-v-step"/>
                 <outlet property="_offsetSyncHV" destination="offsetSyncHV" id="out-offset-sync-hv"/>
+                <outlet property="_followItalic" destination="followItalic" id="out-follow-italic"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
@@ -445,9 +446,14 @@
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                     </box>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="snapCheck">
-                        <rect key="frame" x="20" y="84" width="200" height="18"/>
+                        <rect key="frame" x="20" y="84" width="180" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Enable snap" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3jb-sY-HvZ"/>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="followItalic">
+                        <rect key="frame" x="204" y="84" width="176" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="check" title="Follow italic angle" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="follow-italic-cell"/>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="resetButton">
                         <rect key="frame" x="20" y="16" width="88" height="24"/>

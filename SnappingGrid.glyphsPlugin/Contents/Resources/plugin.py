@@ -12,7 +12,7 @@ from AppKit import (
 	NSTextField, NSStepper, NSButton, NSColorWell,
 	NSBundle, NSNib,
 	NSAttributedString, NSFont, NSForegroundColorAttributeName, NSFontAttributeName,
-	NSEvent,
+	NSEvent, NSGraphicsContext,
 )
 from Foundation import NSObject, NSSelectorFromString
 
@@ -77,6 +77,7 @@ class SettingsPanelController(NSObject):
 	_offsetHStep     = objc.IBOutlet()
 	_offsetVStep     = objc.IBOutlet()
 	_offsetSyncHV    = objc.IBOutlet()
+	_followItalic    = objc.IBOutlet()
 
 	def initWithPlugin_(self, plugin):
 		self = objc.super(SettingsPanelController, self).init()
@@ -194,6 +195,9 @@ class SettingsPanelController(NSObject):
 		preview_sel = NSSelectorFromString('previewChanged:')
 		self._snapCheck.setTarget_(self)
 		self._snapCheck.setAction_(preview_sel)
+		if self._followItalic is not None:
+			self._followItalic.setTarget_(self)
+			self._followItalic.setAction_(preview_sel)
 		colour_sel = NSSelectorFromString('colourChanged:')
 		for well in (self._mainColorWell, self._subColorWell):
 			well.setContinuous_(True)
@@ -228,6 +232,20 @@ class SettingsPanelController(NSObject):
 		self._labelMainColor.setStringValue_(lx({'en': 'Main Color:', 'ja': 'メイン色:', 'zh': '主色:', 'ko': '메인 색상:'}))
 		self._labelSubColor.setStringValue_(lx({'en': 'Sub Color:', 'ja': 'サブ色:', 'zh': '子色:', 'ko': '서브 색상:'}))
 		self._snapCheck.setTitle_(lx({'en': 'Enable snap', 'ja': 'スナップを有効にする', 'zh': '启用吸附', 'ko': '스냅 활성화'}))
+		if self._followItalic is not None:
+			self._followItalic.setTitle_(lx({
+				'en': 'Follow italic angle',
+				'ja': 'イタリック角度に追随',
+				'zh': '跟随斜体角度',
+				'ko': '이탤릭 각도 따르기',
+			}))
+		if self._labelGridOffset is not None:
+			self._labelGridOffset.setStringValue_(lx({
+				'en': 'Grid Offset:',
+				'ja': 'グリッドオフセット:',
+				'zh': '网格偏移:',
+				'ko': '그리드 오프셋:',
+			}))
 		self._cancelButton.setTitle_(lx({'en': 'Cancel', 'ja': 'キャンセル', 'zh': '取消', 'ko': '취소'}))
 		self._okButton.setTitle_(lx({'en': 'OK', 'ja': 'OK', 'zh': 'OK', 'ko': 'OK'}))
 		self._labelGridShape.setStringValue_(lx({
@@ -286,7 +304,8 @@ class SettingsPanelController(NSObject):
 
 		for btn in (self._radioDivision, self._radioUnit, self._mainSync, self._subSync, self._snapCheck,
 		            self._radioSquare, self._radioTriangle, self._radioHorizontal, self._radioVertical,
-		            self._gapEnable, self._gapSyncMainSub, self._gapSyncHV, self._offsetSyncHV):
+		            self._gapEnable, self._gapSyncMainSub, self._gapSyncHV, self._offsetSyncHV,
+		            self._followItalic):
 			self._setButtonTitleColour_(btn, label_colour)
 		for btn in (self._cancelButton, self._okButton):
 			self._setButtonTitleColour_(btn, control_colour)
@@ -369,6 +388,8 @@ class SettingsPanelController(NSObject):
 			self._syncStepperFromField(self._offsetV, self._offsetVStep, -9999)
 		if self._offsetSyncHV is not None:
 			self._offsetSyncHV.setState_(1 if s.get('offsetSyncHV', False) else 0)
+		if self._followItalic is not None:
+			self._followItalic.setState_(1 if s.get('followItalic', True) else 0)
 
 		self._normaliseGapLinks()
 		self._normaliseOffsetLink()
@@ -543,6 +564,7 @@ class SettingsPanelController(NSObject):
 			'offsetX':        offsetX,
 			'offsetY':        offsetY,
 			'offsetSyncHV':   self._offsetSyncHV.state() == 1 if self._offsetSyncHV is not None else False,
+			'followItalic':   self._followItalic.state() == 1 if self._followItalic is not None else True,
 		}
 		return s
 
@@ -905,7 +927,12 @@ class SnappingGrid(GeneralPlugin):
 
 			moves = {}
 			angle_deg = self._effectiveItalicAngleDegrees(layer)
-			tan_shear = math.tan(math.radians(angle_deg))
+			# When the grid does not follow the italic angle it is drawn orthogonally,
+			# so nodes must snap to upright grid coordinates (no shear compensation).
+			if self._boolSetting(s, 'followItalic', True):
+				tan_shear = math.tan(math.radians(angle_deg))
+			else:
+				tan_shear = 0.0
 			shape = s['gridShape']
 			mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 			offsetX = self._floatSetting(s, 'offsetX', 0.0)
@@ -922,24 +949,26 @@ class SnappingGrid(GeneralPlugin):
 
 				if shape == 'triangle':
 					orient = s['triOrientation']
+					# Equilateral-aware steps: Y stays literal, X is derived
+					eStepX, eStepY = self._triEffectiveSteps(orient, stepX, stepY)
 					_, _, subGapX_tri, _ = self._normalisedGapValues(s)
 					if subGapX_tri > 0.0:
-						families = self._triFamilies(orient, stepX, stepY, ySnapOrigin, offsetX, offsetY)
+						families = self._triFamilies(orient, eStepX, eStepY, ySnapOrigin, offsetX, offsetY)
 						su, sv = self._snapTriangleWithGap(pu, pv, families, subGapX_tri)
 					elif orient == 'horizontal':
-						# Lattice with offset: P(m,n) = (m*stepX + n*stepX/2 + offsetX, n*stepY + ySnapOrigin + offsetY)
+						# Lattice with offset: P(m,n) = (m*eStepX + n*eStepX/2 + offsetX, n*eStepY + ySnapOrigin + offsetY)
 						O_y = ySnapOrigin + offsetY
-						n_snap = round((pv - O_y) / stepY)
-						m_snap = round((pu - offsetX - n_snap * stepX * 0.5) / stepX)
-						su = m_snap * stepX + n_snap * stepX * 0.5 + offsetX
-						sv = n_snap * stepY + O_y
+						n_snap = round((pv - O_y) / eStepY)
+						m_snap = round((pu - offsetX - n_snap * eStepX * 0.5) / eStepX)
+						su = m_snap * eStepX + n_snap * eStepX * 0.5 + offsetX
+						sv = n_snap * eStepY + O_y
 					else:
-						# Lattice with offset: P(m,n) = (n*stepX + offsetX, m*stepY + n*stepY/2 + ySnapOrigin + offsetY)
+						# Lattice with offset: P(m,n) = (n*eStepX + offsetX, m*eStepY + n*eStepY/2 + ySnapOrigin + offsetY)
 						O_y = ySnapOrigin + offsetY
-						n_snap = round((pu - offsetX) / stepX)
-						m_snap = round((pv - O_y - n_snap * stepY * 0.5) / stepY)
-						su = n_snap * stepX + offsetX
-						sv = m_snap * stepY + n_snap * stepY * 0.5 + O_y
+						n_snap = round((pu - offsetX) / eStepX)
+						m_snap = round((pv - O_y - n_snap * eStepY * 0.5) / eStepY)
+						su = n_snap * eStepX + offsetX
+						sv = m_snap * eStepY + n_snap * eStepY * 0.5 + O_y
 					snappedX = su + tan_shear * (sv - pivot)
 					snappedY = sv
 				else:
@@ -1047,6 +1076,9 @@ class SnappingGrid(GeneralPlugin):
 			if stepX <= 0 or stepY <= 0:
 				stepX, stepY = mainX, mainY
 		# ギャップは線の中心を分離するだけなので、矢印移動量は従来の間隔を維持する。
+		# 三角形グリッドは Y を固定し X を補正したラティスに合わせて移動する。
+		if s.get('gridShape', 'square') == 'triangle':
+			stepX, stepY = self._triEffectiveSteps(s.get('triOrientation', 'horizontal'), stepX, stepY)
 
 		dx, dy = 0.0, 0.0
 		if keyCode == 123:
@@ -1105,25 +1137,67 @@ class SnappingGrid(GeneralPlugin):
 			shape = s['gridShape']
 			offsetX = self._floatSetting(s, 'offsetX', 0.0)
 			offsetY = self._floatSetting(s, 'offsetY', 0.0)
+
+			# Determine shear handling. When following the italic angle the grid is
+			# drawn upright then sheared. When NOT following, the grid stays
+			# orthogonal but is extended to fill — and clipped to — the slanted
+			# (parallelogram) editing area.
+			angle_deg = self._effectiveItalicAngleDegrees(layer)
+			follow = self._boolSetting(s, 'followItalic', True)
+			if abs(angle_deg) > 0.001 and not follow:
+				tan = math.tan(math.radians(angle_deg))
+				cb = tan * (yBottom - pivot_y)
+				ct = tan * (yTop - pivot_y)
+				xLeft = min(cb, ct)
+				xRight = width + max(cb, ct)
+				clipPath = NSBezierPath.alloc().init()
+				clipPath.moveToPoint_(NSPoint(cb, yBottom))
+				clipPath.lineToPoint_(NSPoint(width + cb, yBottom))
+				clipPath.lineToPoint_(NSPoint(width + ct, yTop))
+				clipPath.lineToPoint_(NSPoint(ct, yTop))
+				clipPath.closePath()
+				shearAngle = 0.0
+			else:
+				xLeft = 0.0
+				xRight = width
+				clipPath = None
+				shearAngle = angle_deg
+
 			if shape == 'triangle':
 				orient = s['triOrientation']
 				y_origin = 0.0 if grid_mode == 'unit' else yBottom
 				mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 				if subX > 0 and subY > 0:
-					self._strokeTriGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), orient, y_origin, layer, pivot_y, subGapX, offsetX, offsetY)
+					eSubX, eSubY = self._triEffectiveSteps(orient, subX, subY)
+					self._strokeTriGrid(width, yTop, yBottom, eSubX, eSubY, lineWidth, self._colorFromList(s['subColor']), orient, y_origin, shearAngle, pivot_y, subGapX, offsetX, offsetY, xLeft, xRight, clipPath)
 				if mainX > 0 and mainY > 0:
-					self._strokeTriGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), orient, y_origin, layer, pivot_y, mainGapX, offsetX, offsetY)
+					eMainX, eMainY = self._triEffectiveSteps(orient, mainX, mainY)
+					self._strokeTriGrid(width, yTop, yBottom, eMainX, eMainY, lineWidth, self._colorFromList(s['mainColor']), orient, y_origin, shearAngle, pivot_y, mainGapX, offsetX, offsetY, xLeft, xRight, clipPath)
 			else:
 				mainGapX, mainGapY, subGapX, subGapY = self._normalisedGapValues(s)
 				if subX > 0 and subY > 0:
-					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), grid_mode, layer, pivot_y, subGapX, subGapY, offsetX, offsetY)
+					self._strokeGrid(width, yTop, yBottom, subX, subY, lineWidth, self._colorFromList(s['subColor']), grid_mode, shearAngle, pivot_y, subGapX, subGapY, offsetX, offsetY, xLeft, xRight, clipPath)
 				if mainX > 0 and mainY > 0:
-					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), grid_mode, layer, pivot_y, mainGapX, mainGapY, offsetX, offsetY)
+					self._strokeGrid(width, yTop, yBottom, mainX, mainY, lineWidth, self._colorFromList(s['mainColor']), grid_mode, shearAngle, pivot_y, mainGapX, mainGapY, offsetX, offsetY, xLeft, xRight, clipPath)
 		except Exception:
 			print(traceback.format_exc())
 
 	@objc.python_method
-	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, layer, pivot_y, gapX=0.0, gapY=0.0, offsetX=0.0, offsetY=0.0):
+	def _finishPath(self, path, shearAngle, pivot_y, clipPath):
+		"""Optionally clip to the slanted area, shear, then stroke."""
+		ctx = None
+		if clipPath is not None:
+			ctx = NSGraphicsContext.currentContext()
+			ctx.saveGraphicsState()
+			clipPath.addClip()
+		if shearAngle is not None and abs(shearAngle) > 0.001:
+			path.transformWithAngle_center_(shearAngle, pivot_y)
+		path.stroke()
+		if ctx is not None:
+			ctx.restoreGraphicsState()
+
+	@objc.python_method
+	def _strokeGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, grid_mode, shearAngle, pivot_y, gapX=0.0, gapY=0.0, offsetX=0.0, offsetY=0.0, xLeft=None, xRight=None, clipPath=None):
 		color.set()
 		path = NSBezierPath.alloc().init()
 		path.setLineWidth_(lineWidth)
@@ -1131,6 +1205,13 @@ class SnappingGrid(GeneralPlugin):
 		gapY = max(0.0, float(gapY or 0.0))
 		offsetX = float(offsetX or 0.0)
 		offsetY = float(offsetY or 0.0)
+		if xLeft is None:
+			xLeft = 0.0
+		if xRight is None:
+			xRight = width
+		# When clipping (italic not followed) include the boundary range so the
+		# whole parallelogram is filled; otherwise keep lines strictly inside.
+		strict = clipPath is None
 
 		def offsetsForGap(gap):
 			if gap <= 0:
@@ -1138,22 +1219,24 @@ class SnappingGrid(GeneralPlugin):
 			half = gap * 0.5
 			return (-half, half)
 
-		# Vertical lines at offsetX + k*stepX, strictly inside (0, width)
+		# Vertical lines at offsetX + k*stepX across [xLeft, xRight]
 		if stepX > 0:
-			k = int(math.floor(-offsetX / stepX)) + 1
-			u = offsetX + k * stepX
-			while u <= 0.0:
-				k += 1
+			k_min = int(math.floor((xLeft - offsetX) / stepX)) - 1
+			k_max = int(math.ceil((xRight - offsetX) / stepX)) + 1
+			for k in range(k_min, k_max + 1):
 				u = offsetX + k * stepX
-			while u < width:
+				if strict:
+					if u <= xLeft + 1e-9 or u >= xRight - 1e-9:
+						continue
+				else:
+					if u < xLeft - 1e-9 or u > xRight + 1e-9:
+						continue
 				for off in offsetsForGap(gapX):
 					x = u + off
 					path.moveToPoint_(NSPoint(x, yBottom))
 					path.lineToPoint_(NSPoint(x, yTop))
-				k += 1
-				u = offsetX + k * stepX
 
-		# Horizontal lines at y_base + n*stepY
+		# Horizontal lines at y_base + n*stepY across [xLeft, xRight]
 		if stepY > 0:
 			y_base = (0.0 if grid_mode == 'unit' else yBottom) + offsetY
 			n = int(math.ceil((yBottom - y_base) / stepY))
@@ -1161,16 +1244,11 @@ class SnappingGrid(GeneralPlugin):
 			while y <= yTop:
 				for off in offsetsForGap(gapY):
 					yy = y + off
-					path.moveToPoint_(NSPoint(0.0,   yy))
-					path.lineToPoint_(NSPoint(width, yy))
+					path.moveToPoint_(NSPoint(xLeft,  yy))
+					path.lineToPoint_(NSPoint(xRight, yy))
 				y += stepY
 
-		# Apply italic shear via Glyphs API (same pivot used by Glyphs itself).
-		angle_deg = self._effectiveItalicAngleDegrees(layer)
-		if abs(angle_deg) > 0.001:
-			path.transformWithAngle_center_(angle_deg, pivot_y)
-
-		path.stroke()
+		self._finishPath(path, shearAngle, pivot_y, clipPath)
 
 	@objc.python_method
 	def _addGapLine(self, path, x0, y0, x1, y1, gap):
@@ -1196,14 +1274,14 @@ class SnappingGrid(GeneralPlugin):
 			path.lineToPoint_(NSPoint(x1 + ox, y1 + oy))
 
 	@objc.python_method
-	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, layer, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0):
+	def _strokeTriGrid(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, orientation, y_origin, shearAngle, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0, xLeft=None, xRight=None, clipPath=None):
 		if orientation == 'vertical':
-			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap, offsetX, offsetY)
+			self._strokeTriGridV(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, shearAngle, pivot_y, gap, offsetX, offsetY, xLeft, xRight, clipPath)
 		else:
-			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap, offsetX, offsetY)
+			self._strokeTriGridH(width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, shearAngle, pivot_y, gap, offsetX, offsetY, xLeft, xRight, clipPath)
 
 	@objc.python_method
-	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0):
+	def _strokeTriGridH(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, shearAngle, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0, xLeft=None, xRight=None, clipPath=None):
 		"""Horizontal tri-grid: horizontal lines + ±diagonal lines (slope = 2*stepY/stepX)."""
 		color.set()
 		path = NSBezierPath.alloc().init()
@@ -1211,42 +1289,43 @@ class SnappingGrid(GeneralPlugin):
 		slope = 2.0 * stepY / stepX
 		gap = max(0.0, float(gap or 0.0))
 		O_y = y_origin + offsetY
+		if xLeft is None:
+			xLeft = 0.0
+		if xRight is None:
+			xRight = width
 
-		# Horizontal lines anchored at O_y
+		# Horizontal lines anchored at O_y, spanning [xLeft, xRight]
 		n_start = int(math.floor((yBottom - O_y) / stepY))
 		n_end = int(math.ceil((yTop - O_y) / stepY))
 		for n in range(n_start, n_end + 1):
 			y = O_y + n * stepY
 			if yBottom <= y <= yTop:
-				self._addGapLine(path, 0.0, y, width, y, gap)
+				self._addGapLine(path, xLeft, y, xRight, y, gap)
 
 		# Diagonal lines pass through (m*stepX + offsetX, O_y).
 		# "/" : y - O_y = slope*(x - (m*stepX + offsetX))  →  x = (y-O_y)/slope + m*stepX + offsetX
 		# "\" : y - O_y = -slope*(x - (m*stepX + offsetX)) →  x = m*stepX + offsetX - (y-O_y)/slope
 		extra = int(math.ceil((abs(yTop - O_y) + abs(yBottom - O_y)) / slope / stepX)) + 2
-		m_min = int(math.ceil(-offsetX / stepX)) - extra - 1
-		m_max = int(math.ceil((width - offsetX) / stepX)) + extra
+		m_min = int(math.floor((xLeft - offsetX) / stepX)) - extra - 1
+		m_max = int(math.ceil((xRight - offsetX) / stepX)) + extra
 
 		for m in range(m_min, m_max + 1):
 			ox = m * stepX + offsetX
 			# "/"
 			x0 = (yBottom - O_y) / slope + ox
 			x1 = (yTop - O_y) / slope + ox
-			if not (x1 < 0 or x0 > width):
+			if not (x1 < xLeft or x0 > xRight):
 				self._addGapLine(path, x0, yBottom, x1, yTop, gap)
 			# "\"
 			x0b = ox - (yBottom - O_y) / slope
 			x1b = ox - (yTop - O_y) / slope
-			if not (x1b > width or x0b < 0):
+			if not (x1b > xRight or x0b < xLeft):
 				self._addGapLine(path, x0b, yBottom, x1b, yTop, gap)
 
-		angle_deg = self._effectiveItalicAngleDegrees(layer)
-		if abs(angle_deg) > 0.001:
-			path.transformWithAngle_center_(angle_deg, pivot_y)
-		path.stroke()
+		self._finishPath(path, shearAngle, pivot_y, clipPath)
 
 	@objc.python_method
-	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, layer, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0):
+	def _strokeTriGridV(self, width, yTop, yBottom, stepX, stepY, lineWidth, color, y_origin, shearAngle, pivot_y, gap=0.0, offsetX=0.0, offsetY=0.0, xLeft=None, xRight=None, clipPath=None):
 		"""Vertical tri-grid: vertical lines + ±diagonal lines (slope = stepY/(2*stepX))."""
 		color.set()
 		path = NSBezierPath.alloc().init()
@@ -1254,45 +1333,50 @@ class SnappingGrid(GeneralPlugin):
 		slope_v = stepY / (2.0 * stepX)
 		gap = max(0.0, float(gap or 0.0))
 		O_y = y_origin + offsetY
+		if xLeft is None:
+			xLeft = 0.0
+		if xRight is None:
+			xRight = width
+		strict = clipPath is None
 
-		# Vertical lines at offsetX + k*stepX, strictly inside (0, width)
+		# Vertical lines at offsetX + k*stepX across [xLeft, xRight]
 		if stepX > 0:
-			k = int(math.floor(-offsetX / stepX)) + 1
-			u = offsetX + k * stepX
-			while u <= 0.0:
-				k += 1
+			k_min = int(math.floor((xLeft - offsetX) / stepX)) - 1
+			k_max = int(math.ceil((xRight - offsetX) / stepX)) + 1
+			for k in range(k_min, k_max + 1):
 				u = offsetX + k * stepX
-			while u < width:
+				if strict:
+					if u <= xLeft + 1e-9 or u >= xRight - 1e-9:
+						continue
+				else:
+					if u < xLeft - 1e-9 or u > xRight + 1e-9:
+						continue
 				self._addGapLine(path, u, yBottom, u, yTop, gap)
-				k += 1
-				u = offsetX + k * stepX
 
-		# Diagonal lines pass through (offsetX, m*stepY + O_y).
+		# Diagonal lines pass through (offsetX, m*stepY + O_y), drawn across [xLeft, xRight].
 		# "/" : y = slope_v*(x - offsetX) + m*stepY + O_y
 		# "\" : y = -slope_v*(x - offsetX) + m*stepY + O_y
-		extra = int(math.ceil((abs(yTop) + abs(yBottom)) / stepY + (width + abs(offsetX)) * slope_v / stepY)) + 2
+		span = abs(xRight - xLeft) + abs(offsetX)
+		extra = int(math.ceil((abs(yTop) + abs(yBottom)) / stepY + span * slope_v / stepY)) + 2
 		m_min = int(math.floor((yBottom - O_y) / stepY)) - extra
 		m_max = int(math.ceil((yTop - O_y) / stepY)) + extra
 
 		for m in range(m_min, m_max + 1):
 			base_y = m * stepY + O_y
 			# "/"
-			y_x0 = slope_v * (0.0 - offsetX) + base_y
-			y_xW = slope_v * (width - offsetX) + base_y
-			y_lo, y_hi = min(y_x0, y_xW), max(y_x0, y_xW)
+			y_xL = slope_v * (xLeft - offsetX) + base_y
+			y_xR = slope_v * (xRight - offsetX) + base_y
+			y_lo, y_hi = min(y_xL, y_xR), max(y_xL, y_xR)
 			if not (y_hi < yBottom or y_lo > yTop):
-				self._addGapLine(path, 0.0, y_x0, width, y_xW, gap)
+				self._addGapLine(path, xLeft, y_xL, xRight, y_xR, gap)
 			# "\"
-			y_x0b = -slope_v * (0.0 - offsetX) + base_y
-			y_xWb = -slope_v * (width - offsetX) + base_y
-			y_lo2, y_hi2 = min(y_x0b, y_xWb), max(y_x0b, y_xWb)
+			y_xLb = -slope_v * (xLeft - offsetX) + base_y
+			y_xRb = -slope_v * (xRight - offsetX) + base_y
+			y_lo2, y_hi2 = min(y_xLb, y_xRb), max(y_xLb, y_xRb)
 			if not (y_hi2 < yBottom or y_lo2 > yTop):
-				self._addGapLine(path, 0.0, y_x0b, width, y_xWb, gap)
+				self._addGapLine(path, xLeft, y_xLb, xRight, y_xRb, gap)
 
-		angle_deg = self._effectiveItalicAngleDegrees(layer)
-		if abs(angle_deg) > 0.001:
-			path.transformWithAngle_center_(angle_deg, pivot_y)
-		path.stroke()
+		self._finishPath(path, shearAngle, pivot_y, clipPath)
 
 	@objc.python_method
 	def _floatSetting(self, s, key, default=0.0):
@@ -1300,6 +1384,13 @@ class SnappingGrid(GeneralPlugin):
 			return float(s.get(key, default))
 		except (TypeError, ValueError):
 			return float(default)
+
+	@objc.python_method
+	def _boolSetting(self, s, key, default=False):
+		try:
+			return bool(s.get(key, default))
+		except (TypeError, ValueError):
+			return bool(default)
 
 	@objc.python_method
 	def _normalisedGapValues(self, s, include_disabled=False):
@@ -1553,6 +1644,20 @@ class SnappingGrid(GeneralPlugin):
 		return mainX / subDivX, mainY / subDivY
 
 	@objc.python_method
+	def _triEffectiveSteps(self, orient, stepX, stepY):
+		"""Keep the Y value literal (metric-aligned) and derive X for equilateral triangles.
+
+		Y is always used as-is so grid rows/edges land on the chosen metric interval:
+		  - horizontal: Y = row height; X (triangle side) is scaled by 2/√3
+		  - vertical:   Y = triangle side; X (column spacing) is scaled by √3/2
+		With these factors, stepX == stepY (common H/V values) yields equilateral
+		triangles while horizontal lines / vertical edges stay on the Y interval.
+		"""
+		if orient == 'vertical':
+			return stepX * (math.sqrt(3.0) / 2.0), stepY
+		return stepX * (2.0 / math.sqrt(3.0)), stepY
+
+	@objc.python_method
 	def _colorFromList(self, rgba):
 		return NSColor.colorWithCalibratedRed_green_blue_alpha_(rgba[0], rgba[1], rgba[2], rgba[3])
 
@@ -1583,6 +1688,7 @@ class SnappingGrid(GeneralPlugin):
 			'offsetX':        0.0,
 			'offsetY':        0.0,
 			'offsetSyncHV':   False,
+			'followItalic':   True,
 		}
 
 	@objc.python_method
@@ -1623,6 +1729,7 @@ class SnappingGrid(GeneralPlugin):
 			'offsetX':        float(d.get(p + '.offsetX', 0.0)),
 			'offsetY':        float(d.get(p + '.offsetY', 0.0)),
 			'offsetSyncHV':   bool(d.get(p + '.offsetSyncHV', False)),
+			'followItalic':   bool(d.get(p + '.followItalic', True)),
 		}
 
 	@objc.python_method
@@ -1654,6 +1761,7 @@ class SnappingGrid(GeneralPlugin):
 		d[p + '.offsetX']        = s.get('offsetX', 0.0)
 		d[p + '.offsetY']        = s.get('offsetY', 0.0)
 		d[p + '.offsetSyncHV']   = s.get('offsetSyncHV', False)
+		d[p + '.followItalic']   = s.get('followItalic', True)
 
 	@objc.python_method
 	def _loadPrefs(self):
